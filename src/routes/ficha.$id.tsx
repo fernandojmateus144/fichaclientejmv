@@ -1,13 +1,16 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/AppHeader";
-import { AreaTexto, Campo, Opcoes, Seccao } from "@/components/campos";
+import { AreaTexto, Campo, CampoEmail, CampoTelefone, Opcoes, Seccao } from "@/components/campos";
 import {
   CANAIS,
   GRUPOS,
+  GRUPOS_CLIENTES,
+  REGIOES,
   SECTORES,
   SISTEMAS_DEBITO,
   euros,
+  formatarCodigoPostal,
   guardarFicha,
   lerFicha,
   novaFicha,
