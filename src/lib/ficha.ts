@@ -23,8 +23,7 @@ export type Ficha = {
   nomeEstabelecimento: string;
   contribuinte: string;
   morada: string;
-  codigoPostal1: string;
-  codigoPostal2: string;
+  codigoPostal: string;
   localidade: string;
   regiao: string;
   pais: string;
