@@ -150,13 +150,10 @@ function Formulario() {
 
           <Seccao numero={4} titulo="Dados Normanvi (só clientes de Café HORECA)" total={TOTAL_SECCOES}>
             <div className="space-y-5 p-5">
-              <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
-                <Campo label="Máquina de Café — Marca" value={ficha.maquinaCafeMarca} onChange={(v) => set("maquinaCafeMarca", v)} />
-                <Campo label="Máquina de Café — Modelo" value={ficha.maquinaCafeModelo} onChange={(v) => set("maquinaCafeModelo", v)} />
-                <Campo label="Moinho — Marca" value={ficha.moinhoMarca} onChange={(v) => set("moinhoMarca", v)} />
-                <Campo label="Moinho — Modelo" value={ficha.moinhoModelo} onChange={(v) => set("moinhoModelo", v)} />
-                <Campo label="Máquina de Lavar — Marca" value={ficha.maquinaLavarMarca} onChange={(v) => set("maquinaLavarMarca", v)} />
-                <Campo label="Máquina de Lavar — Modelo" value={ficha.maquinaLavarModelo} onChange={(v) => set("maquinaLavarModelo", v)} />
+              <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-3">
+                <Campo label="Máquina de Café — Marca - Modelo" value={ficha.maquinaCafe} onChange={(v) => set("maquinaCafe", v)} />
+                <Campo label="Moinho — Marca - Modelo" value={ficha.moinho} onChange={(v) => set("moinho", v)} />
+                <Campo label="Máquina de Lavar — Marca - Modelo" value={ficha.maquinaLavar} onChange={(v) => set("maquinaLavar", v)} />
               </div>
               <p className="font-mono text-[11px] text-inksoft">
                 Preencher apenas se o equipamento a prestar assistência não for propriedade da JMV.

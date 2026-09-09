@@ -40,12 +40,9 @@ export type Ficha = {
   condicoesPagamento: string;
   formasPagamento: string;
   bancos: string;
-  maquinaCafeMarca: string;
-  maquinaCafeModelo: string;
-  moinhoMarca: string;
-  moinhoModelo: string;
-  maquinaLavarMarca: string;
-  maquinaLavarModelo: string;
+  maquinaCafe: string;
+  moinho: string;
+  maquinaLavar: string;
   sistemaDebito: string;
   entregaMorada: string;
   entregaCodigoPostal1: string;
@@ -123,12 +120,9 @@ export function novaFicha(): Ficha {
     condicoesPagamento: "",
     formasPagamento: "",
     bancos: "",
-    maquinaCafeMarca: "",
-    maquinaCafeModelo: "",
-    moinhoMarca: "",
-    moinhoModelo: "",
-    maquinaLavarMarca: "",
-    maquinaLavarModelo: "",
+    maquinaCafe: "",
+    moinho: "",
+    maquinaLavar: "",
     sistemaDebito: "",
     entregaMorada: "",
     entregaCodigoPostal1: "",

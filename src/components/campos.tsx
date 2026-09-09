@@ -91,33 +91,33 @@ export function Opcoes({
   opcoes,
   value,
   onChange,
+  className,
 }: {
   label: string;
   opcoes: string[];
   value: string;
   onChange: (v: string) => void;
+  className?: string;
 }) {
   return (
-    <div>
-      <span className="mb-2 block text-xs font-medium text-inksoft">{label}</span>
-      <div className="flex flex-col gap-2">
+    <label className={`block ${className ?? ""}`}>
+      <span className="mb-1.5 block text-xs font-medium text-inksoft">{label}</span>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={`${inputCls} appearance-none bg-[length:12px] bg-[right_0.9rem_center] bg-no-repeat pr-9`}
+        style={{
+          backgroundImage:
+            "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'><path fill='%23555' d='M1 1.5 6 6.5l5-5'/></svg>\")",
+        }}
+      >
+        <option value="">— Seleccionar —</option>
         {opcoes.map((o) => (
-          <label
-            key={o}
-            className={`flex cursor-pointer items-center gap-2.5 rounded-md border px-3 py-2.5 text-sm ${
-              value === o ? "border-primary bg-primary/5 font-medium" : "border-line bg-paper"
-            }`}
-          >
-            <input
-              type="radio"
-              checked={value === o}
-              onChange={() => onChange(o)}
-              className="size-4 accent-[var(--primary)]"
-            />
+          <option key={o} value={o}>
             {o}
-          </label>
+          </option>
         ))}
-      </div>
-    </div>
+      </select>
+    </label>
   );
 }
