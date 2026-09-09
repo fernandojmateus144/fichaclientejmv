@@ -44,8 +44,7 @@ export type Ficha = {
   maquinaLavar: string;
   sistemaDebito: string;
   entregaMorada: string;
-  entregaCodigoPostal1: string;
-  entregaCodigoPostal2: string;
+  entregaCodigoPostal: string;
   entregaLocalidade: string;
   entregaPessoaContactar: string;
   entregaTelefone: string;
