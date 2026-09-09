@@ -144,7 +144,17 @@ function Formulario() {
               <div className="space-y-4">
                 <Opcoes label="Grupo de Clientes" opcoes={GRUPOS} value={ficha.grupo} onChange={(v) => set("grupo", v)} />
                 {ficha.grupo === "Outro" && (
-                  <Campo label="Qual?" value={ficha.grupoQual} onChange={(v) => set("grupoQual", v)} />
+                  <>
+                    <Opcoes
+                      label="Qual grupo?"
+                      opcoes={GRUPOS_CLIENTES}
+                      value={ficha.grupoLista}
+                      onChange={(v) => set("grupoLista", v)}
+                    />
+                    {ficha.grupoLista === "Outros" && (
+                      <Campo label="Indique o grupo" value={ficha.grupoQual} onChange={(v) => set("grupoQual", v)} />
+                    )}
+                  </>
                 )}
               </div>
             </div>
