@@ -161,9 +161,8 @@ function Formulario() {
           </Seccao>
 
           <Seccao numero={3} titulo="Dados Financeiros" total={TOTAL_SECCOES}>
-            <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2">
               <Campo label="Condições de Pagamento" value={ficha.condicoesPagamento} onChange={(v) => set("condicoesPagamento", v)} />
-              <Campo label="Formas de Pagamento" value={ficha.formasPagamento} onChange={(v) => set("formasPagamento", v)} />
               <Campo label="Bancos" value={ficha.bancos} onChange={(v) => set("bancos", v)} />
             </div>
           </Seccao>
