@@ -116,17 +116,19 @@ function Formulario() {
               <Campo label="Nome do Estabelecimento" value={ficha.nomeEstabelecimento} onChange={(v) => set("nomeEstabelecimento", v)} />
               <Campo label="N.º de Contribuinte" mono value={ficha.contribuinte} onChange={(v) => set("contribuinte", v)} />
               <Campo label="Morada" className="lg:col-span-2" value={ficha.morada} onChange={(v) => set("morada", v)} />
-              <div className="grid grid-cols-2 gap-3">
-                <Campo label="Código Postal" mono value={ficha.codigoPostal1} onChange={(v) => set("codigoPostal1", v)} />
-                <Campo label="&nbsp;" mono value={ficha.codigoPostal2} onChange={(v) => set("codigoPostal2", v)} />
-              </div>
+              <Campo
+                label="Código Postal"
+                mono
+                value={ficha.codigoPostal}
+                onChange={(v) => set("codigoPostal", formatarCodigoPostal(v))}
+              />
               <Campo label="Localidade" value={ficha.localidade} onChange={(v) => set("localidade", v)} />
-              <Campo label="Região" value={ficha.regiao} onChange={(v) => set("regiao", v)} />
+              <Opcoes label="Região" opcoes={REGIOES} value={ficha.regiao} onChange={(v) => set("regiao", v)} />
               <Campo label="País" value={ficha.pais} onChange={(v) => set("pais", v)} />
               <Campo label="Pessoa a Contactar" value={ficha.pessoaContactar} onChange={(v) => set("pessoaContactar", v)} />
               <Campo label="Dia de Descanso" value={ficha.diaDescanso} onChange={(v) => set("diaDescanso", v)} />
-              <Campo label="Telefone" mono value={ficha.telefone} onChange={(v) => set("telefone", v)} />
-              <Campo label="E-mail" type="email" value={ficha.email} onChange={(v) => set("email", v)} />
+              <CampoTelefone label="Telefone" value={ficha.telefone} onChange={(v) => set("telefone", v)} />
+              <CampoEmail label="E-mail" value={ficha.email} onChange={(v) => set("email", v)} />
             </div>
           </Seccao>
 
