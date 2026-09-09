@@ -1,13 +1,16 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/AppHeader";
-import { AreaTexto, Campo, Opcoes, Seccao } from "@/components/campos";
+import { AreaTexto, Campo, CampoEmail, CampoTelefone, Opcoes, Seccao } from "@/components/campos";
 import {
   CANAIS,
   GRUPOS,
+  GRUPOS_CLIENTES,
+  REGIOES,
   SECTORES,
   SISTEMAS_DEBITO,
   euros,
+  formatarCodigoPostal,
   guardarFicha,
   lerFicha,
   novaFicha,
@@ -97,7 +100,12 @@ function Formulario() {
           <div className="grid grid-cols-1 gap-x-6 gap-y-5 border-b border-line p-5 sm:grid-cols-2 lg:grid-cols-5">
             <Campo label="N.º Cliente" mono value={ficha.numeroCliente} onChange={(v) => set("numeroCliente", v)} />
             <Campo label="Ex Cliente N.º" mono value={ficha.exClienteNumero} onChange={(v) => set("exClienteNumero", v)} />
-            <Campo label="Área" value={ficha.area} onChange={(v) => set("area", v)} />
+            <Campo
+              label="Área"
+              mono
+              value={ficha.area}
+              onChange={(v) => set("area", v.replace(/\D/g, "").slice(0, 3))}
+            />
             <Campo label="Vendedor" value={ficha.vendedor} onChange={(v) => set("vendedor", v)} />
             <Campo label="Inspector" value={ficha.inspector} onChange={(v) => set("inspector", v)} />
           </div>
@@ -108,17 +116,19 @@ function Formulario() {
               <Campo label="Nome do Estabelecimento" value={ficha.nomeEstabelecimento} onChange={(v) => set("nomeEstabelecimento", v)} />
               <Campo label="N.º de Contribuinte" mono value={ficha.contribuinte} onChange={(v) => set("contribuinte", v)} />
               <Campo label="Morada" className="lg:col-span-2" value={ficha.morada} onChange={(v) => set("morada", v)} />
-              <div className="grid grid-cols-2 gap-3">
-                <Campo label="Código Postal" mono value={ficha.codigoPostal1} onChange={(v) => set("codigoPostal1", v)} />
-                <Campo label="&nbsp;" mono value={ficha.codigoPostal2} onChange={(v) => set("codigoPostal2", v)} />
-              </div>
+              <Campo
+                label="Código Postal"
+                mono
+                value={ficha.codigoPostal}
+                onChange={(v) => set("codigoPostal", formatarCodigoPostal(v))}
+              />
               <Campo label="Localidade" value={ficha.localidade} onChange={(v) => set("localidade", v)} />
-              <Campo label="Região" value={ficha.regiao} onChange={(v) => set("regiao", v)} />
+              <Opcoes label="Região" opcoes={REGIOES} value={ficha.regiao} onChange={(v) => set("regiao", v)} />
               <Campo label="País" value={ficha.pais} onChange={(v) => set("pais", v)} />
               <Campo label="Pessoa a Contactar" value={ficha.pessoaContactar} onChange={(v) => set("pessoaContactar", v)} />
               <Campo label="Dia de Descanso" value={ficha.diaDescanso} onChange={(v) => set("diaDescanso", v)} />
-              <Campo label="Telefone" mono value={ficha.telefone} onChange={(v) => set("telefone", v)} />
-              <Campo label="E-mail" type="email" value={ficha.email} onChange={(v) => set("email", v)} />
+              <CampoTelefone label="Telefone" value={ficha.telefone} onChange={(v) => set("telefone", v)} />
+              <CampoEmail label="E-mail" value={ficha.email} onChange={(v) => set("email", v)} />
             </div>
           </Seccao>
 
@@ -134,16 +144,25 @@ function Formulario() {
               <div className="space-y-4">
                 <Opcoes label="Grupo de Clientes" opcoes={GRUPOS} value={ficha.grupo} onChange={(v) => set("grupo", v)} />
                 {ficha.grupo === "Outro" && (
-                  <Campo label="Qual?" value={ficha.grupoQual} onChange={(v) => set("grupoQual", v)} />
+                  <>
+                    <Opcoes
+                      label="Qual grupo?"
+                      opcoes={GRUPOS_CLIENTES}
+                      value={ficha.grupoLista}
+                      onChange={(v) => set("grupoLista", v)}
+                    />
+                    {ficha.grupoLista === "Outros" && (
+                      <Campo label="Indique o grupo" value={ficha.grupoQual} onChange={(v) => set("grupoQual", v)} />
+                    )}
+                  </>
                 )}
               </div>
             </div>
           </Seccao>
 
           <Seccao numero={3} titulo="Dados Financeiros" total={TOTAL_SECCOES}>
-            <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2">
               <Campo label="Condições de Pagamento" value={ficha.condicoesPagamento} onChange={(v) => set("condicoesPagamento", v)} />
-              <Campo label="Formas de Pagamento" value={ficha.formasPagamento} onChange={(v) => set("formasPagamento", v)} />
               <Campo label="Bancos" value={ficha.bancos} onChange={(v) => set("bancos", v)} />
             </div>
           </Seccao>

@@ -62,6 +62,73 @@ export function Campo({
   );
 }
 
+export function CampoTelefone({
+  label,
+  value,
+  onChange,
+  className,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  className?: string;
+}) {
+  return (
+    <label className={`block ${className ?? ""}`}>
+      <span className="mb-1.5 block text-xs font-medium text-inksoft">{label}</span>
+      <div className="flex items-stretch overflow-hidden rounded-md border border-line bg-paper focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
+        <span className="grid place-items-center border-r border-line bg-panel px-3 font-mono text-sm text-inksoft">
+          +351
+        </span>
+        <input
+          type="tel"
+          inputMode="numeric"
+          placeholder="912345678"
+          value={value}
+          onChange={(e) => onChange(e.target.value.replace(/\D/g, "").replace(/^351/, "").slice(0, 9))}
+          className="w-full bg-transparent px-3 py-3 font-mono text-base outline-none placeholder:text-inksoft/50"
+        />
+      </div>
+      {value.length > 0 && value.length < 9 && (
+        <span className="mt-1 block font-mono text-[11px] text-warn">O telefone deve ter 9 dígitos.</span>
+      )}
+    </label>
+  );
+}
+
+export function CampoEmail({
+  label,
+  value,
+  onChange,
+  className,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  className?: string;
+}) {
+  const valido = /^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$/.test(value);
+  return (
+    <label className={`block ${className ?? ""}`}>
+      <span className="mb-1.5 block text-xs font-medium text-inksoft">{label}</span>
+      <input
+        type="email"
+        inputMode="email"
+        autoComplete="email"
+        placeholder="nome@empresa.pt"
+        value={value}
+        onChange={(e) => onChange(e.target.value.trim())}
+        className={`${inputCls} placeholder:text-inksoft/50`}
+      />
+      {value.length > 0 && !valido && (
+        <span className="mt-1 block font-mono text-[11px] text-warn">
+          Endereço de correio electrónico inválido.
+        </span>
+      )}
+    </label>
+  );
+}
+
 export function AreaTexto({
   label,
   value,

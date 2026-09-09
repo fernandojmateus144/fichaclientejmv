@@ -23,8 +23,7 @@ export type Ficha = {
   nomeEstabelecimento: string;
   contribuinte: string;
   morada: string;
-  codigoPostal1: string;
-  codigoPostal2: string;
+  codigoPostal: string;
   localidade: string;
   regiao: string;
   pais: string;
@@ -36,17 +35,16 @@ export type Ficha = {
   sector: string;
   sectorOutro: string;
   grupo: string;
+  grupoLista: string;
   grupoQual: string;
   condicoesPagamento: string;
-  formasPagamento: string;
   bancos: string;
   maquinaCafe: string;
   moinho: string;
   maquinaLavar: string;
   sistemaDebito: string;
   entregaMorada: string;
-  entregaCodigoPostal1: string;
-  entregaCodigoPostal2: string;
+  entregaCodigoPostal: string;
   entregaLocalidade: string;
   entregaPessoaContactar: string;
   entregaTelefone: string;
@@ -66,6 +64,111 @@ export const CANAIS = [
 
 export const SECTORES = ["Cafés", "Bebidas", "Outro"];
 export const GRUPOS = ["Nenhum", "Outro"];
+
+export const GRUPOS_CLIENTES = [
+  "00 — Nenhum",
+  "01 — Auchan",
+  "02 — GCT",
+  "03 — Sonae",
+  "04 — Makro",
+  "05 — Carrefour",
+  "06 — Regional Mercadorias",
+  "07 — Cooplecnorte",
+  "08 — Unapor",
+  "09 — CNR",
+  "10 — ACCOR AMORIM",
+  "11 — Unica",
+  "12 — Grossão",
+  "13 — GSI",
+  "14 — Euromadi/Unimark",
+  "15 — Recheio",
+  "16 — Feira Nova",
+  "17 — Pingo Doce",
+  "18 — Uniarme",
+  "19 — M24",
+  "20 — Mercado Externo",
+  "21 — Jorge Sá-Pofuturo",
+  "22 — Jumbo (Net)",
+  "23 — Feira Nova LD",
+  "24 — ITMP (MP)",
+  "25 — Makro (Net)",
+  "26 — Hotusa",
+  "27 — PLUS",
+  "28 — EL CORTE INGLÉS",
+  "29 — DIA/MINIPRECO",
+  "30 — INTERMARCHE/LOJAS",
+  "31 — BRASA RIO",
+  "32 — Madureiras",
+  "33 — La Movida",
+  "34 — Pedra Alta",
+  "35 — MCH Sonae Grossista",
+  "36 — GC Hoteis Sede",
+  "37 — GC Hoteis Lisboa",
+  "38 — GC Of/Vending Sede",
+  "39 — GC Of/Vending Lisboa",
+  "40 — Hoteis Resto Pais",
+  "41 — Of/Vending Resto Pai",
+  "42 — Prom Vnd CH-Algarve",
+  "43 — Concursos Publicos",
+  "44 — REPSOL",
+  "45 — Clientes BPI",
+  "46 — Lidl & Cia",
+  "47 — CNR",
+  "48 — REPSOL/lojas N/cent.",
+  "49 — ALDI",
+  "50 — Grupo Nata-Lisboa",
+  "51 — GC Hoteis Algarve",
+  "52 — AC Group",
+  "53 — LOJAS DIR. ELECLERC",
+  "A2 — (E-C)GCT",
+  "A3 — (E-C)GROSSÃO",
+  "A4 — (E-C)Unimark",
+  "A9 — (E-C)CNR",
+  "B3 — (E-C)GSI",
+  "B4 — (E-C)UNICA",
+  "B8 — (E-C)Uniarme",
+  "Outros",
+];
+
+export const REGIOES = [
+  "Aveiro",
+  "Beja",
+  "Braga",
+  "Bragança",
+  "Castelo Branco",
+  "Coimbra",
+  "Évora",
+  "Faro",
+  "Guarda",
+  "Leiria",
+  "Lisboa",
+  "Portalegre",
+  "Porto",
+  "Santarém",
+  "Setúbal",
+  "Viana do Castelo",
+  "Vila Real",
+  "Viseu",
+  "Região Autónoma dos Açores",
+  "Região Autónoma da Madeira",
+];
+
+export function formatarCodigoPostal(v: string) {
+  const d = v.replace(/\D/g, "").slice(0, 7);
+  return d.length > 4 ? `${d.slice(0, 4)}-${d.slice(4)}` : d;
+}
+
+export function formatarTelefone(v: string) {
+  return v.replace(/\D/g, "").replace(/^351/, "").slice(0, 9);
+}
+
+export function telefoneCompleto(v: string) {
+  return v ? `+351 ${v}` : "";
+}
+
+export function emailValido(v: string) {
+  return /^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$/.test(v);
+}
 export const SISTEMAS_DEBITO = [
   "A - Cliente Paga Tudo",
   "B - Cliente Paga Peças",
@@ -103,8 +206,7 @@ export function novaFicha(): Ficha {
     nomeEstabelecimento: "",
     contribuinte: "",
     morada: "",
-    codigoPostal1: "",
-    codigoPostal2: "",
+    codigoPostal: "",
     localidade: "",
     regiao: "",
     pais: "Portugal",
@@ -116,17 +218,16 @@ export function novaFicha(): Ficha {
     sector: "",
     sectorOutro: "",
     grupo: "Nenhum",
+    grupoLista: "",
     grupoQual: "",
     condicoesPagamento: "",
-    formasPagamento: "",
     bancos: "",
     maquinaCafe: "",
     moinho: "",
     maquinaLavar: "",
     sistemaDebito: "",
     entregaMorada: "",
-    entregaCodigoPostal1: "",
-    entregaCodigoPostal2: "",
+    entregaCodigoPostal: "",
     entregaLocalidade: "",
     entregaPessoaContactar: "",
     entregaTelefone: "",
