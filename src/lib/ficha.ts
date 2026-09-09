@@ -35,9 +35,9 @@ export type Ficha = {
   sector: string;
   sectorOutro: string;
   grupo: string;
+  grupoLista: string;
   grupoQual: string;
   condicoesPagamento: string;
-  formasPagamento: string;
   bancos: string;
   maquinaCafe: string;
   moinho: string;
