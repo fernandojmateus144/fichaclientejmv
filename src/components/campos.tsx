@@ -159,6 +159,7 @@ export function CampoEmail({
           Endereço de correio electrónico inválido.
         </span>
       )}
+      {falta && <Aviso />}
     </label>
   );
 }
