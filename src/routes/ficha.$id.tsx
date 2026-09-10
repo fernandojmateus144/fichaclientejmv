@@ -97,17 +97,18 @@ function Formulario() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-x-6 gap-y-5 border-b border-line p-5 sm:grid-cols-2 lg:grid-cols-5">
-            <Campo label="N.º Cliente" mono value={ficha.numeroCliente} onChange={(v) => set("numeroCliente", v)} />
+          <div className="grid grid-cols-1 gap-x-6 gap-y-5 border-b border-line p-5 sm:grid-cols-2 lg:grid-cols-4">
+            <Campo label="N.º Cliente" mono obrigatorio erro={erro} value={ficha.numeroCliente} onChange={(v) => set("numeroCliente", v)} />
             <Campo label="Ex Cliente N.º" mono value={ficha.exClienteNumero} onChange={(v) => set("exClienteNumero", v)} />
             <Campo
-              label="Área"
+              label="Área de Vendas"
               mono
+              obrigatorio
+              erro={erro}
               value={ficha.area}
               onChange={(v) => set("area", v.replace(/\D/g, "").slice(0, 3))}
             />
-            <Campo label="Vendedor" value={ficha.vendedor} onChange={(v) => set("vendedor", v)} />
-            <Campo label="Inspector" value={ficha.inspector} onChange={(v) => set("inspector", v)} />
+            <Campo label="Inspector" obrigatorio erro={erro} value={ficha.inspector} onChange={(v) => set("inspector", v)} />
           </div>
 
           <Seccao numero={1} titulo="Dados do Cliente" total={TOTAL_SECCOES}>
