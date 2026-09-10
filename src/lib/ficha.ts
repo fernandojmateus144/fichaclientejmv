@@ -66,7 +66,6 @@ export const SECTORES = ["Cafés", "Bebidas", "Outro"];
 export const GRUPOS = ["Nenhum", "Outro"];
 
 export const GRUPOS_CLIENTES = [
-  "00 — Nenhum",
   "01 — Auchan",
   "02 — GCT",
   "03 — Sonae",
