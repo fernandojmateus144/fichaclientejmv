@@ -49,6 +49,7 @@ function Formulario() {
   const navigate = useNavigate();
   const [ficha, setFicha] = useState<Ficha | null>(null);
   const [guardado, setGuardado] = useState(false);
+  const [erro, setErro] = useState(false);
 
   useEffect(() => {
     if (id === "nova") setFicha(novaFicha());
@@ -69,8 +70,46 @@ function Formulario() {
     );
   };
 
+  const eCafes = ficha.sector === "Cafés";
+
+  function emFalta(f: Ficha) {
+    const base: (keyof Ficha)[] = [
+      "numeroCliente",
+      "area",
+      "inspector",
+      "firma",
+      "nomeEstabelecimento",
+      "contribuinte",
+      "morada",
+      "codigoPostal",
+      "localidade",
+      "regiao",
+      "pais",
+      "pessoaContactar",
+      "diaDescanso",
+      "telefone",
+      "email",
+      "canal",
+      "sector",
+      "grupo",
+      "condicoesPagamento",
+    ];
+    const faltam = base.filter((k) => !String(f[k] ?? "").trim());
+    if (f.sector === "Outro" && !f.sectorOutro.trim()) faltam.push("sectorOutro");
+    if (f.grupo === "Outro" && !f.grupoLista.trim()) faltam.push("grupoLista");
+    if (f.grupo === "Outro" && f.grupoLista === "Outros" && !f.grupoQual.trim()) faltam.push("grupoQual");
+    return faltam;
+  }
+
+  const faltam = emFalta(ficha);
+
   function guardar() {
     if (!ficha) return;
+    if (emFalta(ficha).length > 0) {
+      setErro(true);
+      return;
+    }
+    setErro(false);
     const gravada = guardarFicha(ficha);
     setFicha(gravada);
     setGuardado(true);
