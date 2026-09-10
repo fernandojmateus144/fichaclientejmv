@@ -228,6 +228,7 @@ export function Opcoes({
           </option>
         ))}
       </select>
+      {falta && <Aviso />}
     </label>
   );
 }
