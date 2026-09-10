@@ -34,6 +34,14 @@ export function Seccao({
   );
 }
 
+export function Obrigatorio() {
+  return <span className="ml-0.5 text-warn">*</span>;
+}
+
+function Aviso() {
+  return <span className="mt-1 block font-mono text-[11px] text-warn">Campo obrigatório.</span>;
+}
+
 export function Campo({
   label,
   value,
@@ -41,6 +49,8 @@ export function Campo({
   mono,
   type = "text",
   className,
+  obrigatorio,
+  erro,
 }: {
   label: string;
   value: string;
@@ -48,16 +58,23 @@ export function Campo({
   mono?: boolean;
   type?: string;
   className?: string;
+  obrigatorio?: boolean;
+  erro?: boolean;
 }) {
+  const falta = Boolean(obrigatorio && erro && !value.trim());
   return (
     <label className={`block ${className ?? ""}`}>
-      <span className="mb-1.5 block text-xs font-medium text-inksoft">{label}</span>
+      <span className="mb-1.5 block text-xs font-medium text-inksoft">
+        {label}
+        {obrigatorio && <Obrigatorio />}
+      </span>
       <input
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className={`${inputCls} ${mono ? "font-mono" : ""}`}
+        className={`${inputCls} ${mono ? "font-mono" : ""} ${falta ? "border-warn" : ""}`}
       />
+      {falta && <Aviso />}
     </label>
   );
 }
@@ -67,15 +84,23 @@ export function CampoTelefone({
   value,
   onChange,
   className,
+  obrigatorio,
+  erro,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   className?: string;
+  obrigatorio?: boolean;
+  erro?: boolean;
 }) {
+  const falta = Boolean(obrigatorio && erro && !value.trim());
   return (
     <label className={`block ${className ?? ""}`}>
-      <span className="mb-1.5 block text-xs font-medium text-inksoft">{label}</span>
+      <span className="mb-1.5 block text-xs font-medium text-inksoft">
+        {label}
+        {obrigatorio && <Obrigatorio />}
+      </span>
       <div className="flex items-stretch overflow-hidden rounded-md border border-line bg-paper focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
         <span className="grid place-items-center border-r border-line bg-panel px-3 font-mono text-sm text-inksoft">
           +351
@@ -92,6 +117,7 @@ export function CampoTelefone({
       {value.length > 0 && value.length < 9 && (
         <span className="mt-1 block font-mono text-[11px] text-warn">O telefone deve ter 9 dígitos.</span>
       )}
+      {falta && <Aviso />}
     </label>
   );
 }
@@ -101,16 +127,24 @@ export function CampoEmail({
   value,
   onChange,
   className,
+  obrigatorio,
+  erro,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   className?: string;
+  obrigatorio?: boolean;
+  erro?: boolean;
 }) {
   const valido = /^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$/.test(value);
+  const falta = Boolean(obrigatorio && erro && !value.trim());
   return (
     <label className={`block ${className ?? ""}`}>
-      <span className="mb-1.5 block text-xs font-medium text-inksoft">{label}</span>
+      <span className="mb-1.5 block text-xs font-medium text-inksoft">
+        {label}
+        {obrigatorio && <Obrigatorio />}
+      </span>
       <input
         type="email"
         inputMode="email"
@@ -125,6 +159,7 @@ export function CampoEmail({
           Endereço de correio electrónico inválido.
         </span>
       )}
+      {falta && <Aviso />}
     </label>
   );
 }
@@ -159,20 +194,28 @@ export function Opcoes({
   value,
   onChange,
   className,
+  obrigatorio,
+  erro,
 }: {
   label: string;
   opcoes: string[];
   value: string;
   onChange: (v: string) => void;
   className?: string;
+  obrigatorio?: boolean;
+  erro?: boolean;
 }) {
+  const falta = Boolean(obrigatorio && erro && !value.trim());
   return (
     <label className={`block ${className ?? ""}`}>
-      <span className="mb-1.5 block text-xs font-medium text-inksoft">{label}</span>
+      <span className="mb-1.5 block text-xs font-medium text-inksoft">
+        {label}
+        {obrigatorio && <Obrigatorio />}
+      </span>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className={`${inputCls} appearance-none bg-[length:12px] bg-[right_0.9rem_center] bg-no-repeat pr-9`}
+        className={`${inputCls} appearance-none bg-[length:12px] bg-[right_0.9rem_center] bg-no-repeat pr-9 ${falta ? "border-warn" : ""}`}
         style={{
           backgroundImage:
             "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'><path fill='%23555' d='M1 1.5 6 6.5l5-5'/></svg>\")",
@@ -185,6 +228,7 @@ export function Opcoes({
           </option>
         ))}
       </select>
+      {falta && <Aviso />}
     </label>
   );
 }

@@ -17,7 +17,7 @@ export type Ficha = {
   numeroCliente: string;
   exClienteNumero: string;
   area: string;
-  vendedor: string;
+  
   inspector: string;
   firma: string;
   nomeEstabelecimento: string;
@@ -66,7 +66,6 @@ export const SECTORES = ["Cafés", "Bebidas", "Outro"];
 export const GRUPOS = ["Nenhum", "Outro"];
 
 export const GRUPOS_CLIENTES = [
-  "00 — Nenhum",
   "01 — Auchan",
   "02 — GCT",
   "03 — Sonae",
@@ -131,26 +130,21 @@ export const GRUPOS_CLIENTES = [
 ];
 
 export const REGIOES = [
-  "Aveiro",
-  "Beja",
-  "Braga",
-  "Bragança",
-  "Castelo Branco",
-  "Coimbra",
-  "Évora",
-  "Faro",
-  "Guarda",
-  "Leiria",
-  "Lisboa",
-  "Portalegre",
-  "Porto",
-  "Santarém",
-  "Setúbal",
-  "Viana do Castelo",
-  "Vila Real",
-  "Viseu",
-  "Região Autónoma dos Açores",
-  "Região Autónoma da Madeira",
+  "Minho",
+  "Trás-os-Montes e Alto Douro",
+  "Douro Litoral",
+  "Beira Litoral",
+  "Beira Alta",
+  "Beira Baixa",
+  "Beira Interior",
+  "Estremadura",
+  "Ribatejo",
+  "Alto Alentejo",
+  "Alentejo Central",
+  "Baixo Alentejo",
+  "Algarve",
+  "Açores",
+  "Madeira",
 ];
 
 export function formatarCodigoPostal(v: string) {
@@ -200,7 +194,7 @@ export function novaFicha(): Ficha {
     numeroCliente: "",
     exClienteNumero: "",
     area: "",
-    vendedor: "",
+    
     inspector: "",
     firma: "",
     nomeEstabelecimento: "",
