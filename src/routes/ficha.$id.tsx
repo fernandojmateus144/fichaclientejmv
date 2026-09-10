@@ -263,6 +263,7 @@ function Formulario() {
             </div>
           </Seccao>
 
+          {eCafes && (
           <Seccao
             numero={7}
             titulo="Condições de Fornecimento"
