@@ -34,6 +34,14 @@ export function Seccao({
   );
 }
 
+export function Obrigatorio() {
+  return <span className="ml-0.5 text-warn">*</span>;
+}
+
+function Aviso() {
+  return <span className="mt-1 block font-mono text-[11px] text-warn">Campo obrigatório.</span>;
+}
+
 export function Campo({
   label,
   value,
@@ -41,6 +49,8 @@ export function Campo({
   mono,
   type = "text",
   className,
+  obrigatorio,
+  erro,
 }: {
   label: string;
   value: string;
@@ -48,16 +58,23 @@ export function Campo({
   mono?: boolean;
   type?: string;
   className?: string;
+  obrigatorio?: boolean;
+  erro?: boolean;
 }) {
+  const falta = Boolean(obrigatorio && erro && !value.trim());
   return (
     <label className={`block ${className ?? ""}`}>
-      <span className="mb-1.5 block text-xs font-medium text-inksoft">{label}</span>
+      <span className="mb-1.5 block text-xs font-medium text-inksoft">
+        {label}
+        {obrigatorio && <Obrigatorio />}
+      </span>
       <input
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className={`${inputCls} ${mono ? "font-mono" : ""}`}
+        className={`${inputCls} ${mono ? "font-mono" : ""} ${falta ? "border-warn" : ""}`}
       />
+      {falta && <Aviso />}
     </label>
   );
 }
@@ -67,15 +84,23 @@ export function CampoTelefone({
   value,
   onChange,
   className,
+  obrigatorio,
+  erro,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   className?: string;
+  obrigatorio?: boolean;
+  erro?: boolean;
 }) {
+  const falta = Boolean(obrigatorio && erro && !value.trim());
   return (
     <label className={`block ${className ?? ""}`}>
-      <span className="mb-1.5 block text-xs font-medium text-inksoft">{label}</span>
+      <span className="mb-1.5 block text-xs font-medium text-inksoft">
+        {label}
+        {obrigatorio && <Obrigatorio />}
+      </span>
       <div className="flex items-stretch overflow-hidden rounded-md border border-line bg-paper focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
         <span className="grid place-items-center border-r border-line bg-panel px-3 font-mono text-sm text-inksoft">
           +351
