@@ -189,13 +189,15 @@ function Formulario() {
           <Seccao numero={5} titulo="Local de Entrega da Mercadoria" total={TOTAL_SECCOES}>
             <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
               <Campo label="Morada" className="lg:col-span-2" value={ficha.entregaMorada} onChange={(v) => set("entregaMorada", v)} />
-              <div className="grid grid-cols-2 gap-3">
-                <Campo label="Código Postal" mono value={ficha.entregaCodigoPostal1} onChange={(v) => set("entregaCodigoPostal1", v)} />
-                <Campo label="&nbsp;" mono value={ficha.entregaCodigoPostal2} onChange={(v) => set("entregaCodigoPostal2", v)} />
-              </div>
+              <Campo
+                label="Código Postal"
+                mono
+                value={ficha.entregaCodigoPostal}
+                onChange={(v) => set("entregaCodigoPostal", formatarCodigoPostal(v))}
+              />
               <Campo label="Localidade" value={ficha.entregaLocalidade} onChange={(v) => set("entregaLocalidade", v)} />
               <Campo label="Pessoa a Contactar" value={ficha.entregaPessoaContactar} onChange={(v) => set("entregaPessoaContactar", v)} />
-              <Campo label="Telefone" mono value={ficha.entregaTelefone} onChange={(v) => set("entregaTelefone", v)} />
+              <CampoTelefone label="Telefone" value={ficha.entregaTelefone} onChange={(v) => set("entregaTelefone", v)} />
             </div>
           </Seccao>
 
