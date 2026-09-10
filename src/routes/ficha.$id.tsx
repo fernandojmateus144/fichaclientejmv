@@ -230,6 +230,7 @@ function Formulario() {
               />
             </div>
           </Seccao>
+          )}
 
           <Seccao numero={5} titulo="Local de Entrega da Mercadoria" total={TOTAL_SECCOES}>
             <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
