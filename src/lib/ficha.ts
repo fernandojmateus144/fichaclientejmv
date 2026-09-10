@@ -17,7 +17,7 @@ export type Ficha = {
   numeroCliente: string;
   exClienteNumero: string;
   area: string;
-  vendedor: string;
+  
   inspector: string;
   firma: string;
   nomeEstabelecimento: string;
