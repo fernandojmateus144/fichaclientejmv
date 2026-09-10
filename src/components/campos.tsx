@@ -117,6 +117,7 @@ export function CampoTelefone({
       {value.length > 0 && value.length < 9 && (
         <span className="mt-1 block font-mono text-[11px] text-warn">O telefone deve ter 9 dígitos.</span>
       )}
+      {falta && <Aviso />}
     </label>
   );
 }
@@ -126,16 +127,24 @@ export function CampoEmail({
   value,
   onChange,
   className,
+  obrigatorio,
+  erro,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   className?: string;
+  obrigatorio?: boolean;
+  erro?: boolean;
 }) {
   const valido = /^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$/.test(value);
+  const falta = Boolean(obrigatorio && erro && !value.trim());
   return (
     <label className={`block ${className ?? ""}`}>
-      <span className="mb-1.5 block text-xs font-medium text-inksoft">{label}</span>
+      <span className="mb-1.5 block text-xs font-medium text-inksoft">
+        {label}
+        {obrigatorio && <Obrigatorio />}
+      </span>
       <input
         type="email"
         inputMode="email"
