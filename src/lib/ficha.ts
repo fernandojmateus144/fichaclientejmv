@@ -200,7 +200,7 @@ export function novaFicha(): Ficha {
     numeroCliente: "",
     exClienteNumero: "",
     area: "",
-    vendedor: "",
+    
     inspector: "",
     firma: "",
     nomeEstabelecimento: "",
