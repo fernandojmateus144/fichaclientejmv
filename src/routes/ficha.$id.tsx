@@ -351,7 +351,13 @@ function Formulario() {
                   ? "Ficha guardada neste aparelho."
                   : "Alterações por guardar."}
             </p>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                onClick={() => navigate({ to: "/" })}
+                className="flex items-center gap-2 rounded-md border border-line bg-paper px-4 py-3 text-sm font-medium text-inksoft hover:bg-rail"
+              >
+                <span className="font-mono leading-none">✕</span> Cancelar
+              </button>
               <button
                 onClick={() => window.print()}
                 className="flex items-center gap-2 rounded-md border border-line bg-paper px-4 py-3 text-sm font-medium text-ink hover:bg-rail"
