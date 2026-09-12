@@ -341,12 +341,23 @@ function Formulario() {
               Preencher o preço apenas caso seja diferente do preço de tabela geral.
             </p>
           </Seccao>
+          )}
 
           <div className="no-print flex flex-col-reverse gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
             <p className="font-mono text-[11px] text-inksoft">
-              {guardado ? "Ficha guardada neste aparelho." : "Alterações por guardar."}
+              {erro && faltam.length > 0
+                ? `Faltam ${faltam.length} campos obrigatórios.`
+                : guardado
+                  ? "Ficha guardada neste aparelho."
+                  : "Alterações por guardar."}
             </p>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                onClick={() => navigate({ to: "/" })}
+                className="flex items-center gap-2 rounded-md border border-line bg-paper px-4 py-3 text-sm font-medium text-inksoft hover:bg-rail"
+              >
+                <span className="font-mono leading-none">✕</span> Cancelar
+              </button>
               <button
                 onClick={() => window.print()}
                 className="flex items-center gap-2 rounded-md border border-line bg-paper px-4 py-3 text-sm font-medium text-ink hover:bg-rail"
