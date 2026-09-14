@@ -227,7 +227,7 @@ export function novaFicha(): Ficha {
     entregaTelefone: "",
     observacoes: "",
     declaracao: false,
-    linhas: [novaLinha(), novaLinha(), novaLinha()],
+    linhas: [novaLinha()],
   };
 }
 

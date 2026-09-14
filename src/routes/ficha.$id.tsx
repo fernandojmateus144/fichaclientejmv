@@ -287,8 +287,7 @@ function Formulario() {
                     <th className="px-3 py-2.5 text-right font-medium">Desc. Com.</th>
                     <th className="px-3 py-2.5 font-medium">Bónus Cód.</th>
                     <th className="px-3 py-2.5 font-medium">Bónus Designação</th>
-                    <th className="px-3 py-2.5 text-right font-medium">Qt. Bónus</th>
-                    <th className="px-5 py-2.5 text-right font-medium">Total</th>
+                    <th className="px-5 py-2.5 text-right font-medium">Qt. Bónus</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-line">
@@ -315,25 +314,12 @@ function Formulario() {
                       <td className="px-3 py-1">
                         <input value={l.bonusDesignacao} onChange={(e) => setLinha(l.id, "bonusDesignacao", e.target.value)} className={celaCls} />
                       </td>
-                      <td className="px-3 py-1">
+                      <td className="px-5 py-1">
                         <input value={l.qtBonus} onChange={(e) => setLinha(l.id, "qtBonus", e.target.value)} className={`${celaCls} w-16 text-right font-mono`} />
-                      </td>
-                      <td className="px-5 py-2.5 text-right font-mono text-sm font-medium text-ink">
-                        {euros(totalLinha(l))}
                       </td>
                     </tr>
                   ))}
                 </tbody>
-                <tfoot>
-                  <tr className="border-t-2 border-ink bg-panel">
-                    <td className="px-5 py-3 font-mono text-[11px] uppercase tracking-wide text-inksoft" colSpan={8}>
-                      Total fornecimento
-                    </td>
-                    <td className="px-5 py-3 text-right font-mono text-base font-semibold text-primary">
-                      {euros(totalFicha(ficha))} €
-                    </td>
-                  </tr>
-                </tfoot>
               </table>
             </div>
             <p className="px-5 pb-4 font-mono text-[11px] text-inksoft">
