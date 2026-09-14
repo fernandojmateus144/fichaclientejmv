@@ -287,8 +287,7 @@ function Formulario() {
                     <th className="px-3 py-2.5 text-right font-medium">Desc. Com.</th>
                     <th className="px-3 py-2.5 font-medium">Bónus Cód.</th>
                     <th className="px-3 py-2.5 font-medium">Bónus Designação</th>
-                    <th className="px-3 py-2.5 text-right font-medium">Qt. Bónus</th>
-                    <th className="px-5 py-2.5 text-right font-medium">Total</th>
+                    <th className="px-5 py-2.5 text-right font-medium">Qt. Bónus</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-line">
