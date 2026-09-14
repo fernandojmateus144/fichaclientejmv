@@ -263,7 +263,6 @@ function Formulario() {
             </div>
           </Seccao>
 
-          {eCafes && (
           <Seccao
             numero={7}
             titulo="Condições de Fornecimento"
@@ -341,7 +340,6 @@ function Formulario() {
               Preencher o preço apenas caso seja diferente do preço de tabela geral.
             </p>
           </Seccao>
-          )}
 
           <div className="no-print flex flex-col-reverse gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
             <p className="font-mono text-[11px] text-inksoft">
