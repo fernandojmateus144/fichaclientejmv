@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import * as XLSX from "xlsx";
 import { AppHeader } from "@/components/AppHeader";
 import { apagarFicha, lerFichas, telefoneCompleto, type Ficha } from "@/lib/ficha";
 
