@@ -371,7 +371,145 @@ export function novaFicha(): Ficha {
     observacoes: "",
     declaracao: false,
     linhas: [novaLinha()],
+
+    prospData: "",
+    prospRespNegociacao: "",
+    prospAnosActividade: "",
+    prospJaFoiCliente: "",
+    prospJaFoiClienteOnde: "",
+    prospConheceEmpresa: "",
+    prospConheceComo: "",
+    prospConheceAlguem: "",
+    prospOutrosEstab: "",
+    prospOutrosEstabQuais: "",
+    prospDegustacao: "",
+    prospDegustacaoOpiniao: "",
+    prospEstabNovo: "",
+    prospAbertoHa: "",
+    prospTrespasse: "",
+    prospVinculo: "",
+    prospArrendamento: "",
+    prospArrendamentoAte: "",
+    prospRenda: "",
+    prospMarcaCafe: "",
+    prospConsumoMensal: "",
+    prospLote: "",
+    prospPreco: "",
+    prospDesconto: "",
+    prospBonus: "",
+    prospTemContrato: "",
+    prospContratoTipo: "",
+    prospFimContrato: "",
+    prospHorarioDas: "",
+    prospHorarioAs: "",
+    prospNumEstabArea: "",
+    prospTipoEstab: "",
+    prospTipoEstabOutro: "",
+    prospPontosFracos: "",
+    prospMaquinas: "",
+    prospMobiliario: "",
+    prospVerba: "",
+    prospLouca: "",
+    prospAssistencia: "",
+    prospToldos: "",
+    prospReclames: "",
+    prospOutros: "",
+    prospLoteInvestimento: "",
+    prospCondicoes: "",
+    prospCaptar: "",
+    prospObservacoes: "",
+    prospVisitas: "",
+
+    contratoNumeroCC: "",
+    contratoConcelho: "",
+    indNaturalidadePt: "",
+    indNaturalidadeQual: "",
+    indEstadoCivil: "",
+    indNomeConjuge: "",
+    indMoradaParticular: "",
+    indLocalidade: "",
+    indConcelho: "",
+    indTelefone: "",
+    indNumeroCC: "",
+    socios: [novoSocio()],
+    certidaoPermanente: "",
+    cliNovo: "",
+    cliNossoClienteEstab: "",
+    cliFoiNossoClienteEstab: "",
+    cliAnosActividade: "",
+    cliOutrosEstab: "",
+    cliOutrosEstabQuais: "",
+    cliMarcaConsome: "",
+    cliPropriedade: "",
+    cliInformacoesComerciais: "",
+    estabNovo: "",
+    estabAbertoHa: "",
+    estabMarcaCafeConsumia: "",
+    estabHorarioDas: "",
+    estabHorarioAs: "",
+    parecerEstabelecimento: "",
+    parecerCliente: "",
+
+    piNumero: "",
+    piJaConsumiaTorrie: "",
+    piMaquinasModo: "",
+    piMaquinas: [novoItem()],
+    piMobiliarioModo: "",
+    piMobiliario: [novoItem()],
+    piToldosModo: "",
+    piToldos: [novoItem()],
+    piReclamesModo: "",
+    piReclames: [novoItem()],
+    piOutrosModo: "",
+    piOutros: [novoItem()],
+    piContrato: "",
+    piMediaMensal: "",
+    piLote: "",
+    piBonus: "",
+    piDizeres: "",
+    piData: "",
+    piAssinaturaCliente: "",
+    piAprovacaoJMV: "",
+    piDataAprovacao: "",
+    piObservacoes: "",
+    piAssinaturaVendedor: "",
+    piAssinaturaInspector: "",
+    piDataRecepcao: "",
+    piNumRequisicao: "",
+    piDataEntregaSAC: "",
+    piNumPedidoCompra: "",
+    piCusto: "",
   };
+}
+
+export function novoItem(): Item {
+  return {
+    id: crypto.randomUUID(),
+    qtd: "",
+    descricao: "",
+    ref: "",
+    cor: "",
+    largura: "",
+    avanco: "",
+    altura: "",
+  };
+}
+
+export function novoSocio(): Socio {
+  return {
+    id: crypto.randomUUID(),
+    nome: "",
+    cargo: "",
+    estadoCivil: "",
+    moradaParticular: "",
+    localidade: "",
+    contribuinte: "",
+  };
+}
+
+function normalizar(f: Partial<Ficha>): Ficha {
+  const base = novaFicha();
+  return { ...base, ...f, id: f.id ?? base.id };
 }
 
 export function lerFichas(): Ficha[] {
@@ -379,8 +517,8 @@ export function lerFichas(): Ficha[] {
   try {
     const raw = window.localStorage.getItem(KEY);
     if (!raw) return [];
-    const dados = JSON.parse(raw) as Ficha[];
-    return Array.isArray(dados) ? dados : [];
+    const dados = JSON.parse(raw) as Partial<Ficha>[];
+    return Array.isArray(dados) ? dados.map(normalizar) : [];
   } catch {
     return [];
   }
@@ -389,6 +527,7 @@ export function lerFichas(): Ficha[] {
 export function lerFicha(id: string): Ficha | undefined {
   return lerFichas().find((f) => f.id === id);
 }
+
 
 export function guardarFicha(ficha: Ficha) {
   const fichas = lerFichas();
