@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import * as XLSX from "xlsx";
 import { AppHeader } from "@/components/AppHeader";
 import { apagarFicha, lerFichas, telefoneCompleto, type Ficha } from "@/lib/ficha";
 
@@ -67,6 +68,57 @@ function Lista() {
     setFichas(lerFichas());
   }
 
+  function exportarExcel(fichas: Ficha[]) {
+    if (fichas.length === 0) {
+      window.alert("Não há fichas para exportar.");
+      return;
+    }
+    const cabecalhos = [
+      "N.º Cliente",
+      "Firma",
+      "Estabelecimento",
+      "Contribuinte",
+      "Localidade",
+      "Região",
+      "Canal",
+      "Sector",
+      "Área de Vendas",
+      "Inspector",
+      "Pessoa a Contactar",
+      "Dia de Descanso",
+      "Telefone",
+      "Email",
+      "País",
+      "Condições Pagamento",
+      "Bancos",
+      "Actualizado em",
+    ];
+    const dados = fichas.map((f) => [
+      f.numeroCliente,
+      f.firma,
+      f.nomeEstabelecimento,
+      f.contribuinte,
+      f.localidade,
+      f.regiao,
+      f.canal,
+      f.sector,
+      f.area,
+      f.inspector,
+      f.pessoaContactar,
+      f.diaDescanso,
+      telefoneCompleto(f.telefone),
+      f.email,
+      f.pais,
+      f.condicoesPagamento,
+      f.bancos,
+      new Date(f.actualizadoEm).toLocaleDateString("pt-PT"),
+    ]);
+    const ws = XLSX.utils.aoa_to_sheet([cabecalhos, ...dados]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Fichas");
+    XLSX.writeFile(wb, `fichas-cliente-jmv-${new Date().toISOString().slice(0, 10)}.xlsx`);
+  }
+
   return (
     <div className="min-h-screen bg-rail text-ink antialiased">
       <AppHeader />
@@ -118,6 +170,13 @@ function Lista() {
                     className="w-full bg-transparent text-sm outline-none placeholder:text-inksoft/60 sm:w-64"
                   />
                 </div>
+                <button
+                  type="button"
+                  onClick={() => exportarExcel(filtradas)}
+                  className="flex shrink-0 items-center gap-1.5 rounded-md border border-line bg-paper px-3 py-2.5 text-sm font-medium text-ink ring-1 ring-line"
+                >
+                  Exportar Excel
+                </button>
                 <Link
                   to="/ficha/$id"
                   params={{ id: "nova" }}
