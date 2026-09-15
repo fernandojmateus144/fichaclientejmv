@@ -68,6 +68,57 @@ function Lista() {
     setFichas(lerFichas());
   }
 
+  function exportarExcel(fichas: Ficha[]) {
+    if (fichas.length === 0) {
+      window.alert("Não há fichas para exportar.");
+      return;
+    }
+    const cabecalhos = [
+      "N.º Cliente",
+      "Firma",
+      "Estabelecimento",
+      "Contribuinte",
+      "Localidade",
+      "Região",
+      "Canal",
+      "Sector",
+      "Área de Vendas",
+      "Inspector",
+      "Pessoa a Contactar",
+      "Dia de Descanso",
+      "Telefone",
+      "Email",
+      "País",
+      "Condições Pagamento",
+      "Bancos",
+      "Actualizado em",
+    ];
+    const dados = fichas.map((f) => [
+      f.numeroCliente,
+      f.firma,
+      f.nomeEstabelecimento,
+      f.contribuinte,
+      f.localidade,
+      f.regiao,
+      f.canal,
+      f.sector,
+      f.area,
+      f.inspector,
+      f.pessoaContactar,
+      f.diaDescanso,
+      telefoneCompleto(f.telefone),
+      f.email,
+      f.pais,
+      f.condicoesPagamento,
+      f.bancos,
+      new Date(f.actualizadoEm).toLocaleDateString("pt-PT"),
+    ]);
+    const ws = XLSX.utils.aoa_to_sheet([cabecalhos, ...dados]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Fichas");
+    XLSX.writeFile(wb, `fichas-cliente-jmv-${new Date().toISOString().slice(0, 10)}.xlsx`);
+  }
+
   return (
     <div className="min-h-screen bg-rail text-ink antialiased">
       <AppHeader />
