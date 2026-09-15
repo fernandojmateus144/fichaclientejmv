@@ -170,6 +170,13 @@ function Lista() {
                     className="w-full bg-transparent text-sm outline-none placeholder:text-inksoft/60 sm:w-64"
                   />
                 </div>
+                <button
+                  type="button"
+                  onClick={() => exportarExcel(filtradas)}
+                  className="flex shrink-0 items-center gap-1.5 rounded-md border border-line bg-paper px-3 py-2.5 text-sm font-medium text-ink ring-1 ring-line"
+                >
+                  Exportar Excel
+                </button>
                 <Link
                   to="/ficha/$id"
                   params={{ id: "nova" }}
