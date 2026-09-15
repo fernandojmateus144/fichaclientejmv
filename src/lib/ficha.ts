@@ -10,6 +10,27 @@ export type Linha = {
   qtBonus: string;
 };
 
+export type Item = {
+  id: string;
+  qtd: string;
+  descricao: string;
+  ref: string;
+  cor: string;
+  largura: string;
+  avanco: string;
+  altura: string;
+};
+
+export type Socio = {
+  id: string;
+  nome: string;
+  cargo: string;
+  estadoCivil: string;
+  moradaParticular: string;
+  localidade: string;
+  contribuinte: string;
+};
+
 export type Ficha = {
   id: string;
   criadoEm: string;
@@ -17,7 +38,7 @@ export type Ficha = {
   numeroCliente: string;
   exClienteNumero: string;
   area: string;
-  
+
   inspector: string;
   firma: string;
   nomeEstabelecimento: string;
@@ -51,7 +72,129 @@ export type Ficha = {
   observacoes: string;
   declaracao: boolean;
   linhas: Linha[];
+
+  // 1 — Ficha de Prospecção
+  prospData: string;
+  prospRespNegociacao: string;
+  prospAnosActividade: string;
+  prospJaFoiCliente: string;
+  prospJaFoiClienteOnde: string;
+  prospConheceEmpresa: string;
+  prospConheceComo: string;
+  prospConheceAlguem: string;
+  prospOutrosEstab: string;
+  prospOutrosEstabQuais: string;
+  prospDegustacao: string;
+  prospDegustacaoOpiniao: string;
+  prospEstabNovo: string;
+  prospAbertoHa: string;
+  prospTrespasse: string;
+  prospVinculo: string;
+  prospArrendamento: string;
+  prospArrendamentoAte: string;
+  prospRenda: string;
+  prospMarcaCafe: string;
+  prospConsumoMensal: string;
+  prospLote: string;
+  prospPreco: string;
+  prospDesconto: string;
+  prospBonus: string;
+  prospTemContrato: string;
+  prospContratoTipo: string;
+  prospFimContrato: string;
+  prospHorarioDas: string;
+  prospHorarioAs: string;
+  prospNumEstabArea: string;
+  prospTipoEstab: string;
+  prospTipoEstabOutro: string;
+  prospPontosFracos: string;
+  prospMaquinas: string;
+  prospMobiliario: string;
+  prospVerba: string;
+  prospLouca: string;
+  prospAssistencia: string;
+  prospToldos: string;
+  prospReclames: string;
+  prospOutros: string;
+  prospLoteInvestimento: string;
+  prospCondicoes: string;
+  prospCaptar: string;
+  prospObservacoes: string;
+  prospVisitas: string;
+
+  // 3 — Ficha de Cliente para Contrato
+  contratoNumeroCC: string;
+  contratoConcelho: string;
+  indNaturalidadePt: string;
+  indNaturalidadeQual: string;
+  indEstadoCivil: string;
+  indNomeConjuge: string;
+  indMoradaParticular: string;
+  indLocalidade: string;
+  indConcelho: string;
+  indTelefone: string;
+  indNumeroCC: string;
+  socios: Socio[];
+  certidaoPermanente: string;
+  cliNovo: string;
+  cliNossoClienteEstab: string;
+  cliFoiNossoClienteEstab: string;
+  cliAnosActividade: string;
+  cliOutrosEstab: string;
+  cliOutrosEstabQuais: string;
+  cliMarcaConsome: string;
+  cliPropriedade: string;
+  cliInformacoesComerciais: string;
+  estabNovo: string;
+  estabAbertoHa: string;
+  estabMarcaCafeConsumia: string;
+  estabHorarioDas: string;
+  estabHorarioAs: string;
+  parecerEstabelecimento: string;
+  parecerCliente: string;
+
+  // 4 — Pedido de Investimento
+  piNumero: string;
+  piJaConsumiaTorrie: string;
+  piMaquinasModo: string;
+  piMaquinas: Item[];
+  piMobiliarioModo: string;
+  piMobiliario: Item[];
+  piToldosModo: string;
+  piToldos: Item[];
+  piReclamesModo: string;
+  piReclames: Item[];
+  piOutrosModo: string;
+  piOutros: Item[];
+  piContrato: string;
+  piMediaMensal: string;
+  piLote: string;
+  piBonus: string;
+  piDizeres: string;
+  piData: string;
+  piAssinaturaCliente: string;
+  piAprovacaoJMV: string;
+  piDataAprovacao: string;
+  piObservacoes: string;
+  piAssinaturaVendedor: string;
+  piAssinaturaInspector: string;
+  piDataRecepcao: string;
+  piNumRequisicao: string;
+  piDataEntregaSAC: string;
+  piNumPedidoCompra: string;
+  piCusto: string;
 };
+
+export const SIM_NAO = ["Sim", "Não"];
+export const VINCULOS = ["Dono do imóvel", "Dono do negócio", "Explorador", "Subexplorador"];
+export const TIPOS_ESTAB = ["Café", "Restaurante", "Snack-Bar", "Bar", "Empresa", "Hotel", "Outro"];
+export const ESTADOS_CIVIS = ["Solteiro(a)", "Casado(a)", "União de facto", "Divorciado(a)", "Viúvo(a)"];
+export const PROPRIEDADES = ["Proprietário do imóvel", "Dono do trespasse", "Explorador"];
+export const MODOS_INVESTIMENTO = [
+  "Empréstimo gratuito pelo tempo de consumo de cafés Torrié",
+  "Venda nas condições do contrato a celebrar",
+];
+
 
 export const CANAIS = [
   "Moderna Distribuição Retalhista",
@@ -228,7 +371,145 @@ export function novaFicha(): Ficha {
     observacoes: "",
     declaracao: false,
     linhas: [novaLinha()],
+
+    prospData: "",
+    prospRespNegociacao: "",
+    prospAnosActividade: "",
+    prospJaFoiCliente: "",
+    prospJaFoiClienteOnde: "",
+    prospConheceEmpresa: "",
+    prospConheceComo: "",
+    prospConheceAlguem: "",
+    prospOutrosEstab: "",
+    prospOutrosEstabQuais: "",
+    prospDegustacao: "",
+    prospDegustacaoOpiniao: "",
+    prospEstabNovo: "",
+    prospAbertoHa: "",
+    prospTrespasse: "",
+    prospVinculo: "",
+    prospArrendamento: "",
+    prospArrendamentoAte: "",
+    prospRenda: "",
+    prospMarcaCafe: "",
+    prospConsumoMensal: "",
+    prospLote: "",
+    prospPreco: "",
+    prospDesconto: "",
+    prospBonus: "",
+    prospTemContrato: "",
+    prospContratoTipo: "",
+    prospFimContrato: "",
+    prospHorarioDas: "",
+    prospHorarioAs: "",
+    prospNumEstabArea: "",
+    prospTipoEstab: "",
+    prospTipoEstabOutro: "",
+    prospPontosFracos: "",
+    prospMaquinas: "",
+    prospMobiliario: "",
+    prospVerba: "",
+    prospLouca: "",
+    prospAssistencia: "",
+    prospToldos: "",
+    prospReclames: "",
+    prospOutros: "",
+    prospLoteInvestimento: "",
+    prospCondicoes: "",
+    prospCaptar: "",
+    prospObservacoes: "",
+    prospVisitas: "",
+
+    contratoNumeroCC: "",
+    contratoConcelho: "",
+    indNaturalidadePt: "",
+    indNaturalidadeQual: "",
+    indEstadoCivil: "",
+    indNomeConjuge: "",
+    indMoradaParticular: "",
+    indLocalidade: "",
+    indConcelho: "",
+    indTelefone: "",
+    indNumeroCC: "",
+    socios: [novoSocio()],
+    certidaoPermanente: "",
+    cliNovo: "",
+    cliNossoClienteEstab: "",
+    cliFoiNossoClienteEstab: "",
+    cliAnosActividade: "",
+    cliOutrosEstab: "",
+    cliOutrosEstabQuais: "",
+    cliMarcaConsome: "",
+    cliPropriedade: "",
+    cliInformacoesComerciais: "",
+    estabNovo: "",
+    estabAbertoHa: "",
+    estabMarcaCafeConsumia: "",
+    estabHorarioDas: "",
+    estabHorarioAs: "",
+    parecerEstabelecimento: "",
+    parecerCliente: "",
+
+    piNumero: "",
+    piJaConsumiaTorrie: "",
+    piMaquinasModo: "",
+    piMaquinas: [novoItem()],
+    piMobiliarioModo: "",
+    piMobiliario: [novoItem()],
+    piToldosModo: "",
+    piToldos: [novoItem()],
+    piReclamesModo: "",
+    piReclames: [novoItem()],
+    piOutrosModo: "",
+    piOutros: [novoItem()],
+    piContrato: "",
+    piMediaMensal: "",
+    piLote: "",
+    piBonus: "",
+    piDizeres: "",
+    piData: "",
+    piAssinaturaCliente: "",
+    piAprovacaoJMV: "",
+    piDataAprovacao: "",
+    piObservacoes: "",
+    piAssinaturaVendedor: "",
+    piAssinaturaInspector: "",
+    piDataRecepcao: "",
+    piNumRequisicao: "",
+    piDataEntregaSAC: "",
+    piNumPedidoCompra: "",
+    piCusto: "",
   };
+}
+
+export function novoItem(): Item {
+  return {
+    id: crypto.randomUUID(),
+    qtd: "",
+    descricao: "",
+    ref: "",
+    cor: "",
+    largura: "",
+    avanco: "",
+    altura: "",
+  };
+}
+
+export function novoSocio(): Socio {
+  return {
+    id: crypto.randomUUID(),
+    nome: "",
+    cargo: "",
+    estadoCivil: "",
+    moradaParticular: "",
+    localidade: "",
+    contribuinte: "",
+  };
+}
+
+function normalizar(f: Partial<Ficha>): Ficha {
+  const base = novaFicha();
+  return { ...base, ...f, id: f.id ?? base.id };
 }
 
 export function lerFichas(): Ficha[] {
@@ -236,8 +517,8 @@ export function lerFichas(): Ficha[] {
   try {
     const raw = window.localStorage.getItem(KEY);
     if (!raw) return [];
-    const dados = JSON.parse(raw) as Ficha[];
-    return Array.isArray(dados) ? dados : [];
+    const dados = JSON.parse(raw) as Partial<Ficha>[];
+    return Array.isArray(dados) ? dados.map(normalizar) : [];
   } catch {
     return [];
   }
@@ -246,6 +527,7 @@ export function lerFichas(): Ficha[] {
 export function lerFicha(id: string): Ficha | undefined {
   return lerFichas().find((f) => f.id === id);
 }
+
 
 export function guardarFicha(ficha: Ficha) {
   const fichas = lerFichas();
