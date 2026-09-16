@@ -1,24 +1,40 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/AppHeader";
-import { AreaTexto, Campo, CampoEmail, CampoTelefone, Opcoes, Seccao } from "@/components/campos";
+import {
+  AreaTexto,
+  Bloqueado,
+  Campo,
+  CampoEmail,
+  CampoTelefone,
+  Opcoes,
+  Seccao,
+} from "@/components/campos";
 import {
   CANAIS,
+  ESTADOS_CIVIS,
   GRUPOS,
   GRUPOS_CLIENTES,
+  MODOS_INVESTIMENTO,
+  PROPRIEDADES,
   REGIOES,
   SECTORES,
+  SIM_NAO,
   SISTEMAS_DEBITO,
-  euros,
+  TIPOS_ESTAB,
+  VINCULOS,
   formatarCodigoPostal,
   guardarFicha,
   lerFicha,
   novaFicha,
   novaLinha,
-  totalFicha,
-  totalLinha,
+  novoItem,
+  novoSocio,
+  telefoneCompleto,
   type Ficha,
+  type Item,
   type Linha,
+  type Socio,
 } from "@/lib/ficha";
 
 export const Route = createFileRoute("/ficha/$id")({
@@ -28,21 +44,27 @@ export const Route = createFileRoute("/ficha/$id")({
       {
         name: "description",
         content:
-          "Formulário completo da ficha de cliente JMV: dados do cliente, canal, dados financeiros, equipamento e condições de fornecimento.",
+          "Ficha de cliente JMV em quatro separadores: prospecção, abertura em SAP, ficha para contrato e pedido de investimento.",
       },
       { property: "og:title", content: "Preencher ficha de cliente — JMV" },
       {
         property: "og:description",
-        content: "Formulário completo da ficha de cliente JMV, pronto a preencher em qualquer aparelho.",
+        content: "Ficha de cliente JMV em quatro separadores, pronta a preencher em qualquer aparelho.",
       },
     ],
   }),
   component: Formulario,
 });
 
-const TOTAL_SECCOES = 7;
 const celaCls =
   "w-full rounded border border-line bg-paper px-2 py-2.5 text-sm outline-none focus:border-primary";
+
+const SEPARADORES = [
+  "1 · Ficha de Prospecção",
+  "2 · Abertura de Cliente em SAP",
+  "3 · Ficha de Cliente para Contrato",
+  "4 · Pedido de Investimento",
+];
 
 function Formulario() {
   const { id } = Route.useParams();
@@ -50,6 +72,7 @@ function Formulario() {
   const [ficha, setFicha] = useState<Ficha | null>(null);
   const [guardado, setGuardado] = useState(false);
   const [erro, setErro] = useState(false);
+  const [aba, setAba] = useState(0);
 
   useEffect(() => {
     if (id === "nova") setFicha(novaFicha());
@@ -57,22 +80,30 @@ function Formulario() {
   }, [id]);
 
   if (!ficha) return null;
+  const f = ficha;
 
   const set = <K extends keyof Ficha>(k: K, v: Ficha[K]) => {
-    setFicha({ ...ficha, [k]: v });
+    setFicha({ ...f, [k]: v });
     setGuardado(false);
   };
 
   const setLinha = (linhaId: string, k: keyof Linha, v: string) => {
     set(
       "linhas",
-      ficha.linhas.map((l) => (l.id === linhaId ? { ...l, [k]: v } : l)),
+      f.linhas.map((l) => (l.id === linhaId ? { ...l, [k]: v } : l)),
     );
   };
 
-  const eCafes = ficha.sector === "Cafés";
+  const setSocio = (socioId: string, k: keyof Socio, v: string) => {
+    set(
+      "socios",
+      f.socios.map((s) => (s.id === socioId ? { ...s, [k]: v } : s)),
+    );
+  };
 
-  function emFalta(f: Ficha) {
+  const eCafes = f.sector === "Cafés";
+
+  function emFalta(x: Ficha) {
     const base: (keyof Ficha)[] = [
       "numeroCliente",
       "area",
@@ -94,19 +125,21 @@ function Formulario() {
       "grupo",
       "condicoesPagamento",
     ];
-    const faltam = base.filter((k) => !String(f[k] ?? "").trim());
-    if (f.sector === "Outro" && !f.sectorOutro.trim()) faltam.push("sectorOutro");
-    if (f.grupo === "Outro" && !f.grupoLista.trim()) faltam.push("grupoLista");
-    if (f.grupo === "Outro" && f.grupoLista === "Outros" && !f.grupoQual.trim()) faltam.push("grupoQual");
+    const faltam = base.filter((k) => !String(x[k] ?? "").trim());
+    if (x.sector === "Outro" && !x.sectorOutro.trim()) faltam.push("sectorOutro");
+    if (x.grupo === "Outro" && !x.grupoLista.trim()) faltam.push("grupoLista");
+    if (x.grupo === "Outro" && x.grupoLista === "Outros" && !x.grupoQual.trim()) faltam.push("grupoQual");
     return faltam;
   }
 
-  const faltam = emFalta(ficha);
+  const faltam = emFalta(f);
+  const faltamAba1 = faltam.filter((k) => k !== "canal" && k !== "sector" && k !== "grupo" && k !== "condicoesPagamento" && k !== "sectorOutro" && k !== "grupoLista" && k !== "grupoQual");
 
   function guardar() {
     if (!ficha) return;
     if (emFalta(ficha).length > 0) {
       setErro(true);
+      setAba(faltamAba1.length > 0 ? 0 : 1);
       return;
     }
     setErro(false);
@@ -115,6 +148,527 @@ function Formulario() {
     setGuardado(true);
     if (id === "nova") navigate({ to: "/ficha/$id", params: { id: gravada.id }, replace: true });
   }
+
+  /* ---------- blocos reutilizados ---------- */
+
+  const identificacaoEditavel = (
+    <div className="grid grid-cols-1 gap-x-6 gap-y-5 border-b border-line p-5 sm:grid-cols-2 lg:grid-cols-4">
+      <Campo label="N.º Cliente" mono obrigatorio erro={erro} value={f.numeroCliente} onChange={(v) => set("numeroCliente", v)} />
+      <Campo label="Ex Cliente N.º" mono value={f.exClienteNumero} onChange={(v) => set("exClienteNumero", v)} />
+      <Campo
+        label="Área de Vendas"
+        mono
+        obrigatorio
+        erro={erro}
+        value={f.area}
+        onChange={(v) => set("area", v.replace(/\D/g, "").slice(0, 3))}
+      />
+      <Campo label="Inspector" obrigatorio erro={erro} value={f.inspector} onChange={(v) => set("inspector", v)} />
+    </div>
+  );
+
+  const identificacaoBloqueada = (
+    <div className="grid grid-cols-1 gap-x-6 gap-y-5 border-b border-line p-5 sm:grid-cols-2 lg:grid-cols-4">
+      <Bloqueado label="N.º Cliente" mono value={f.numeroCliente} />
+      <Bloqueado label="Ex Cliente N.º" mono value={f.exClienteNumero} />
+      <Bloqueado label="Área de Vendas" mono value={f.area} />
+      <Bloqueado label="Inspector" value={f.inspector} />
+    </div>
+  );
+
+  const dadosClienteBloqueados = (
+    <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
+      <Bloqueado label="Firma do Cliente" value={f.firma} />
+      <Bloqueado label="Nome do Estabelecimento" value={f.nomeEstabelecimento} />
+      <Bloqueado label="N.º de Contribuinte" mono value={f.contribuinte} />
+      <Bloqueado label="Morada" className="lg:col-span-2" value={f.morada} />
+      <Bloqueado label="Código Postal" mono value={f.codigoPostal} />
+      <Bloqueado label="Localidade" value={f.localidade} />
+      <Bloqueado label="Região" value={f.regiao} />
+      <Bloqueado label="País" value={f.pais} />
+      <Bloqueado label="Pessoa a Contactar" value={f.pessoaContactar} />
+      <Bloqueado label="Dia de Descanso" value={f.diaDescanso} />
+      <Bloqueado label="Telefone" mono value={telefoneCompleto(f.telefone)} />
+      <Bloqueado label="E-mail" value={f.email} />
+    </div>
+  );
+
+  /* ---------- separador 1 — prospecção ---------- */
+
+  const aba1 = (
+    <>
+      {identificacaoEditavel}
+
+      <Seccao numero={1} titulo="Dados do Cliente" total={4}>
+        <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
+          <Campo label="Firma do Cliente" obrigatorio erro={erro} value={f.firma} onChange={(v) => set("firma", v)} />
+          <Campo label="Nome do Estabelecimento" obrigatorio erro={erro} value={f.nomeEstabelecimento} onChange={(v) => set("nomeEstabelecimento", v)} />
+          <Campo label="N.º de Contribuinte" mono obrigatorio erro={erro} value={f.contribuinte} onChange={(v) => set("contribuinte", v)} />
+          <Campo label="Morada" className="lg:col-span-2" obrigatorio erro={erro} value={f.morada} onChange={(v) => set("morada", v)} />
+          <Campo label="Código Postal" mono obrigatorio erro={erro} value={f.codigoPostal} onChange={(v) => set("codigoPostal", formatarCodigoPostal(v))} />
+          <Campo label="Localidade" obrigatorio erro={erro} value={f.localidade} onChange={(v) => set("localidade", v)} />
+          <Opcoes label="Região" opcoes={REGIOES} obrigatorio erro={erro} value={f.regiao} onChange={(v) => set("regiao", v)} />
+          <Campo label="País" obrigatorio erro={erro} value={f.pais} onChange={(v) => set("pais", v)} />
+          <Campo label="Pessoa a Contactar" obrigatorio erro={erro} value={f.pessoaContactar} onChange={(v) => set("pessoaContactar", v)} />
+          <Campo label="Dia de Descanso" obrigatorio erro={erro} value={f.diaDescanso} onChange={(v) => set("diaDescanso", v)} />
+          <CampoTelefone label="Telefone" obrigatorio erro={erro} value={f.telefone} onChange={(v) => set("telefone", v)} />
+          <CampoEmail label="E-mail" obrigatorio erro={erro} value={f.email} onChange={(v) => set("email", v)} />
+        </div>
+      </Seccao>
+
+      <Seccao numero={2} titulo="Contacto de Prospecção" total={4}>
+        <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
+          <Campo label="Data" type="date" value={f.prospData} onChange={(v) => set("prospData", v)} />
+          <Campo label="Responsável pela Negociação" value={f.prospRespNegociacao} onChange={(v) => set("prospRespNegociacao", v)} />
+          <Campo label="Anos de Actividade" mono value={f.prospAnosActividade} onChange={(v) => set("prospAnosActividade", v)} />
+          <Opcoes label="Já foi nosso cliente?" opcoes={SIM_NAO} value={f.prospJaFoiCliente} onChange={(v) => set("prospJaFoiCliente", v)} />
+          {f.prospJaFoiCliente === "Sim" && (
+            <Campo label="Em que estabelecimento?" value={f.prospJaFoiClienteOnde} onChange={(v) => set("prospJaFoiClienteOnde", v)} />
+          )}
+          <Opcoes label="Conhece a nossa empresa?" opcoes={SIM_NAO} value={f.prospConheceEmpresa} onChange={(v) => set("prospConheceEmpresa", v)} />
+          {f.prospConheceEmpresa === "Sim" && (
+            <Campo label="Como?" value={f.prospConheceComo} onChange={(v) => set("prospConheceComo", v)} />
+          )}
+          <Campo label="Conhece alguém na empresa?" value={f.prospConheceAlguem} onChange={(v) => set("prospConheceAlguem", v)} />
+          <Opcoes label="Tem outros estabelecimentos?" opcoes={SIM_NAO} value={f.prospOutrosEstab} onChange={(v) => set("prospOutrosEstab", v)} />
+          {f.prospOutrosEstab === "Sim" && (
+            <Campo label="Quais?" value={f.prospOutrosEstabQuais} onChange={(v) => set("prospOutrosEstabQuais", v)} />
+          )}
+          <Opcoes label="Fez degustação?" opcoes={SIM_NAO} value={f.prospDegustacao} onChange={(v) => set("prospDegustacao", v)} />
+          {f.prospDegustacao === "Sim" && (
+            <Campo label="Opinião da degustação" value={f.prospDegustacaoOpiniao} onChange={(v) => set("prospDegustacaoOpiniao", v)} />
+          )}
+        </div>
+      </Seccao>
+
+      <Seccao numero={3} titulo="Estabelecimento e Vínculo" total={4}>
+        <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
+          <Opcoes label="Estabelecimento novo?" opcoes={SIM_NAO} value={f.prospEstabNovo} onChange={(v) => set("prospEstabNovo", v)} />
+          {f.prospEstabNovo === "Não" && (
+            <Campo label="Aberto há quanto tempo?" value={f.prospAbertoHa} onChange={(v) => set("prospAbertoHa", v)} />
+          )}
+          <Opcoes label="Houve trespasse?" opcoes={SIM_NAO} value={f.prospTrespasse} onChange={(v) => set("prospTrespasse", v)} />
+          <Opcoes label="Vínculo ao estabelecimento" opcoes={VINCULOS} value={f.prospVinculo} onChange={(v) => set("prospVinculo", v)} />
+          <Opcoes label="Tem contrato de arrendamento?" opcoes={SIM_NAO} value={f.prospArrendamento} onChange={(v) => set("prospArrendamento", v)} />
+          {f.prospArrendamento === "Sim" && (
+            <>
+              <Campo label="Arrendamento até" type="date" value={f.prospArrendamentoAte} onChange={(v) => set("prospArrendamentoAte", v)} />
+              <Campo label="Renda mensal (€)" mono value={f.prospRenda} onChange={(v) => set("prospRenda", v)} />
+            </>
+          )}
+          <Campo label="Horário — das" type="time" value={f.prospHorarioDas} onChange={(v) => set("prospHorarioDas", v)} />
+          <Campo label="Horário — às" type="time" value={f.prospHorarioAs} onChange={(v) => set("prospHorarioAs", v)} />
+          <Campo label="N.º de estabelecimentos na área" mono value={f.prospNumEstabArea} onChange={(v) => set("prospNumEstabArea", v)} />
+          <Opcoes label="Tipo de estabelecimento" opcoes={TIPOS_ESTAB} value={f.prospTipoEstab} onChange={(v) => set("prospTipoEstab", v)} />
+          {f.prospTipoEstab === "Outro" && (
+            <Campo label="Qual?" value={f.prospTipoEstabOutro} onChange={(v) => set("prospTipoEstabOutro", v)} />
+          )}
+        </div>
+      </Seccao>
+
+      <Seccao numero={4} titulo="Consumo, Concorrência e Investimento Pedido" total={4}>
+        <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
+          <Campo label="Marca de café actual" value={f.prospMarcaCafe} onChange={(v) => set("prospMarcaCafe", v)} />
+          <Campo label="Consumo mensal (kg)" mono value={f.prospConsumoMensal} onChange={(v) => set("prospConsumoMensal", v)} />
+          <Campo label="Lote" value={f.prospLote} onChange={(v) => set("prospLote", v)} />
+          <Campo label="Preço (€/kg)" mono value={f.prospPreco} onChange={(v) => set("prospPreco", v)} />
+          <Campo label="Desconto (%)" mono value={f.prospDesconto} onChange={(v) => set("prospDesconto", v)} />
+          <Campo label="Bónus" value={f.prospBonus} onChange={(v) => set("prospBonus", v)} />
+          <Opcoes label="Tem contrato com o fornecedor actual?" opcoes={SIM_NAO} value={f.prospTemContrato} onChange={(v) => set("prospTemContrato", v)} />
+          {f.prospTemContrato === "Sim" && (
+            <>
+              <Campo label="Tipo de contrato" value={f.prospContratoTipo} onChange={(v) => set("prospContratoTipo", v)} />
+              <Campo label="Fim do contrato" type="date" value={f.prospFimContrato} onChange={(v) => set("prospFimContrato", v)} />
+            </>
+          )}
+          <Campo label="Máquinas pedidas" value={f.prospMaquinas} onChange={(v) => set("prospMaquinas", v)} />
+          <Campo label="Mobiliário pedido" value={f.prospMobiliario} onChange={(v) => set("prospMobiliario", v)} />
+          <Campo label="Verba (€)" mono value={f.prospVerba} onChange={(v) => set("prospVerba", v)} />
+          <Campo label="Louça" value={f.prospLouca} onChange={(v) => set("prospLouca", v)} />
+          <Campo label="Assistência" value={f.prospAssistencia} onChange={(v) => set("prospAssistencia", v)} />
+          <Campo label="Toldos" value={f.prospToldos} onChange={(v) => set("prospToldos", v)} />
+          <Campo label="Reclames" value={f.prospReclames} onChange={(v) => set("prospReclames", v)} />
+          <Campo label="Outros" value={f.prospOutros} onChange={(v) => set("prospOutros", v)} />
+          <Campo label="Lote a propor" value={f.prospLoteInvestimento} onChange={(v) => set("prospLoteInvestimento", v)} />
+          <Campo label="N.º de visitas efectuadas" mono value={f.prospVisitas} onChange={(v) => set("prospVisitas", v)} />
+        </div>
+        <div className="grid grid-cols-1 gap-x-6 gap-y-5 px-5 pb-5 sm:grid-cols-2">
+          <AreaTexto label="Pontos fracos do estabelecimento" value={f.prospPontosFracos} onChange={(v) => set("prospPontosFracos", v)} rows={3} />
+          <AreaTexto label="Condições propostas" value={f.prospCondicoes} onChange={(v) => set("prospCondicoes", v)} rows={3} />
+          <AreaTexto label="O que é necessário para captar o cliente" value={f.prospCaptar} onChange={(v) => set("prospCaptar", v)} rows={3} />
+          <AreaTexto label="Observações" value={f.prospObservacoes} onChange={(v) => set("prospObservacoes", v)} rows={3} />
+        </div>
+      </Seccao>
+    </>
+  );
+
+  /* ---------- separador 2 — abertura SAP ---------- */
+
+  const aba2 = (
+    <>
+      {identificacaoBloqueada}
+
+      <Seccao numero={1} titulo="Dados do Cliente" total={7}>
+        {dadosClienteBloqueados}
+      </Seccao>
+
+      <Seccao numero={2} titulo="Canal / Sector de Actividade / Grupo de Clientes" total={7}>
+        <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-3">
+          <Opcoes label="Canal de Distribuição" opcoes={CANAIS} obrigatorio erro={erro} value={f.canal} onChange={(v) => set("canal", v)} />
+          <div className="space-y-4">
+            <Opcoes label="Sector de Actividade" opcoes={SECTORES} obrigatorio erro={erro} value={f.sector} onChange={(v) => set("sector", v)} />
+            {f.sector === "Outro" && (
+              <Campo label="Qual?" obrigatorio erro={erro} value={f.sectorOutro} onChange={(v) => set("sectorOutro", v)} />
+            )}
+          </div>
+          <div className="space-y-4">
+            <Opcoes label="Grupo de Clientes" opcoes={GRUPOS} obrigatorio erro={erro} value={f.grupo} onChange={(v) => set("grupo", v)} />
+            {f.grupo === "Outro" && (
+              <>
+                <Opcoes label="Qual grupo?" opcoes={GRUPOS_CLIENTES} obrigatorio erro={erro} value={f.grupoLista} onChange={(v) => set("grupoLista", v)} />
+                {f.grupoLista === "Outros" && (
+                  <Campo label="Indique o grupo" obrigatorio erro={erro} value={f.grupoQual} onChange={(v) => set("grupoQual", v)} />
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      </Seccao>
+
+      <Seccao numero={3} titulo="Dados Financeiros" total={7}>
+        <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2">
+          <Campo label="Condições de Pagamento" obrigatorio erro={erro} value={f.condicoesPagamento} onChange={(v) => set("condicoesPagamento", v)} />
+          <Campo label="Bancos" value={f.bancos} onChange={(v) => set("bancos", v)} />
+        </div>
+      </Seccao>
+
+      {eCafes && (
+        <Seccao numero={4} titulo="Dados Normanvi (só clientes de Café HORECA)" total={7}>
+          <div className="space-y-5 p-5">
+            <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-3">
+              <Campo label="Máquina de Café — Marca - Modelo" value={f.maquinaCafe} onChange={(v) => set("maquinaCafe", v)} />
+              <Campo label="Moinho — Marca - Modelo" value={f.moinho} onChange={(v) => set("moinho", v)} />
+              <Campo label="Máquina de Lavar — Marca - Modelo" value={f.maquinaLavar} onChange={(v) => set("maquinaLavar", v)} />
+            </div>
+            <p className="font-mono text-[11px] text-inksoft">
+              Preencher apenas se o equipamento a prestar assistência não for propriedade da JMV.
+            </p>
+            <Opcoes label="Sistema de Débito" opcoes={SISTEMAS_DEBITO} value={f.sistemaDebito} onChange={(v) => set("sistemaDebito", v)} />
+          </div>
+        </Seccao>
+      )}
+
+      <Seccao numero={5} titulo="Local de Entrega da Mercadoria" total={7}>
+        <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
+          <Campo label="Morada" className="lg:col-span-2" value={f.entregaMorada} onChange={(v) => set("entregaMorada", v)} />
+          <Campo label="Código Postal" mono value={f.entregaCodigoPostal} onChange={(v) => set("entregaCodigoPostal", formatarCodigoPostal(v))} />
+          <Campo label="Localidade" value={f.entregaLocalidade} onChange={(v) => set("entregaLocalidade", v)} />
+          <Campo label="Pessoa a Contactar" value={f.entregaPessoaContactar} onChange={(v) => set("entregaPessoaContactar", v)} />
+          <CampoTelefone label="Telefone" value={f.entregaTelefone} onChange={(v) => set("entregaTelefone", v)} />
+        </div>
+      </Seccao>
+
+      <Seccao numero={6} titulo="Observações" total={7}>
+        <div className="space-y-4 p-5">
+          <AreaTexto value={f.observacoes} onChange={(v) => set("observacoes", v)} rows={5} />
+          <label className="flex items-start gap-3 rounded-md border border-line bg-panel px-3 py-3 text-sm">
+            <input
+              type="checkbox"
+              checked={f.declaracao}
+              onChange={(e) => set("declaracao", e.target.checked)}
+              className="mt-0.5 size-4 accent-[var(--primary)]"
+            />
+            Declaro que me foi exibida a declaração de início de actividade fiscal / cartão de
+            contribuinte do cliente, que verifiquei estar em conformidade.
+          </label>
+        </div>
+      </Seccao>
+
+      <Seccao
+        numero={7}
+        titulo="Condições de Fornecimento"
+        total={7}
+        extra={
+          <button
+            onClick={() => set("linhas", [...f.linhas, novaLinha()])}
+            className="no-print ml-auto flex items-center gap-1.5 rounded-md border border-line bg-paper px-3 py-2 text-sm font-medium text-ink hover:bg-rail"
+          >
+            <span className="font-mono leading-none">+</span> Adicionar linha
+          </button>
+        }
+      >
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[900px] border-collapse text-sm">
+            <thead>
+              <tr className="border-b border-line text-left font-mono text-[11px] uppercase tracking-wide text-inksoft">
+                <th className="px-5 py-2.5 font-medium">Cód.</th>
+                <th className="px-3 py-2.5 font-medium">Designação</th>
+                <th className="px-3 py-2.5 text-right font-medium">Qt. Venda</th>
+                <th className="px-3 py-2.5 text-right font-medium">Preço</th>
+                <th className="px-3 py-2.5 text-right font-medium">Desc. Com.</th>
+                <th className="px-3 py-2.5 font-medium">Bónus Cód.</th>
+                <th className="px-3 py-2.5 font-medium">Bónus Designação</th>
+                <th className="px-5 py-2.5 text-right font-medium">Qt. Bónus</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-line">
+              {f.linhas.map((l) => (
+                <tr key={l.id} className="align-middle">
+                  <td className="px-5 py-1">
+                    <input value={l.cod} onChange={(e) => setLinha(l.id, "cod", e.target.value)} className={`${celaCls} w-24 font-mono`} />
+                  </td>
+                  <td className="px-3 py-1">
+                    <input value={l.designacao} onChange={(e) => setLinha(l.id, "designacao", e.target.value)} className={celaCls} />
+                  </td>
+                  <td className="px-3 py-1">
+                    <input value={l.qtVenda} onChange={(e) => setLinha(l.id, "qtVenda", e.target.value)} className={`${celaCls} w-16 text-right font-mono`} />
+                  </td>
+                  <td className="px-3 py-1">
+                    <input value={l.preco} onChange={(e) => setLinha(l.id, "preco", e.target.value)} className={`${celaCls} w-20 text-right font-mono`} />
+                  </td>
+                  <td className="px-3 py-1">
+                    <input value={l.desconto} onChange={(e) => setLinha(l.id, "desconto", e.target.value)} className={`${celaCls} w-16 text-right font-mono`} />
+                  </td>
+                  <td className="px-3 py-1">
+                    <input value={l.bonusCod} onChange={(e) => setLinha(l.id, "bonusCod", e.target.value)} className={`${celaCls} w-24 font-mono`} />
+                  </td>
+                  <td className="px-3 py-1">
+                    <input value={l.bonusDesignacao} onChange={(e) => setLinha(l.id, "bonusDesignacao", e.target.value)} className={celaCls} />
+                  </td>
+                  <td className="px-5 py-1">
+                    <input value={l.qtBonus} onChange={(e) => setLinha(l.id, "qtBonus", e.target.value)} className={`${celaCls} w-16 text-right font-mono`} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="px-5 pb-4 font-mono text-[11px] text-inksoft">
+          Preencher o preço apenas caso seja diferente do preço de tabela geral.
+        </p>
+      </Seccao>
+    </>
+  );
+
+  /* ---------- separador 3 — ficha para contrato ---------- */
+
+  const aba3 = (
+    <>
+      {identificacaoBloqueada}
+
+      <Seccao numero={1} titulo="Identificação do Cliente" total={4}>
+        {dadosClienteBloqueados}
+        <div className="grid grid-cols-1 gap-x-6 gap-y-5 px-5 pb-5 sm:grid-cols-2 lg:grid-cols-3">
+          <Campo label="N.º do Cartão de Cidadão" mono value={f.contratoNumeroCC} onChange={(v) => set("contratoNumeroCC", v)} />
+          <Campo label="Concelho" value={f.contratoConcelho} onChange={(v) => set("contratoConcelho", v)} />
+          <Campo label="Certidão permanente (código)" mono value={f.certidaoPermanente} onChange={(v) => set("certidaoPermanente", v)} />
+        </div>
+      </Seccao>
+
+      <Seccao numero={2} titulo="Cliente em Nome Individual" total={4}>
+        <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
+          <Opcoes label="Natural de Portugal?" opcoes={SIM_NAO} value={f.indNaturalidadePt} onChange={(v) => set("indNaturalidadePt", v)} />
+          {f.indNaturalidadePt === "Não" && (
+            <Campo label="Naturalidade" value={f.indNaturalidadeQual} onChange={(v) => set("indNaturalidadeQual", v)} />
+          )}
+          <Opcoes label="Estado civil" opcoes={ESTADOS_CIVIS} value={f.indEstadoCivil} onChange={(v) => set("indEstadoCivil", v)} />
+          {(f.indEstadoCivil === "Casado(a)" || f.indEstadoCivil === "União de facto") && (
+            <Campo label="Nome do cônjuge" value={f.indNomeConjuge} onChange={(v) => set("indNomeConjuge", v)} />
+          )}
+          <Campo label="Morada particular" className="lg:col-span-2" value={f.indMoradaParticular} onChange={(v) => set("indMoradaParticular", v)} />
+          <Campo label="Localidade" value={f.indLocalidade} onChange={(v) => set("indLocalidade", v)} />
+          <Campo label="Concelho" value={f.indConcelho} onChange={(v) => set("indConcelho", v)} />
+          <CampoTelefone label="Telefone" value={f.indTelefone} onChange={(v) => set("indTelefone", v)} />
+          <Campo label="N.º do Cartão de Cidadão" mono value={f.indNumeroCC} onChange={(v) => set("indNumeroCC", v)} />
+        </div>
+      </Seccao>
+
+      <Seccao
+        numero={3}
+        titulo="Sócios / Gerentes"
+        total={4}
+        extra={
+          <button
+            onClick={() => set("socios", [...f.socios, novoSocio()])}
+            className="no-print ml-auto flex items-center gap-1.5 rounded-md border border-line bg-paper px-3 py-2 text-sm font-medium text-ink hover:bg-rail"
+          >
+            <span className="font-mono leading-none">+</span> Adicionar sócio
+          </button>
+        }
+      >
+        <div className="space-y-5 p-5">
+          {f.socios.map((s, i) => (
+            <div key={s.id} className="rounded-lg border border-line p-4">
+              <p className="mb-3 font-mono text-[11px] uppercase tracking-wide text-inksoft">Sócio {i + 1}</p>
+              <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+                <Campo label="Nome" value={s.nome} onChange={(v) => setSocio(s.id, "nome", v)} />
+                <Campo label="Cargo" value={s.cargo} onChange={(v) => setSocio(s.id, "cargo", v)} />
+                <Opcoes label="Estado civil" opcoes={ESTADOS_CIVIS} value={s.estadoCivil} onChange={(v) => setSocio(s.id, "estadoCivil", v)} />
+                <Campo label="Morada particular" className="lg:col-span-2" value={s.moradaParticular} onChange={(v) => setSocio(s.id, "moradaParticular", v)} />
+                <Campo label="Localidade" value={s.localidade} onChange={(v) => setSocio(s.id, "localidade", v)} />
+                <Campo label="N.º de contribuinte" mono value={s.contribuinte} onChange={(v) => setSocio(s.id, "contribuinte", v)} />
+              </div>
+              {f.socios.length > 1 && (
+                <button
+                  onClick={() => set("socios", f.socios.filter((x) => x.id !== s.id))}
+                  className="no-print mt-3 rounded-md border border-line px-3 py-1.5 font-mono text-[11px] text-inksoft hover:bg-rail"
+                >
+                  Remover sócio
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      </Seccao>
+
+      <Seccao numero={4} titulo="Informações sobre o Cliente e o Estabelecimento" total={4}>
+        <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
+          <Opcoes label="Cliente novo?" opcoes={SIM_NAO} value={f.cliNovo} onChange={(v) => set("cliNovo", v)} />
+          <Campo label="É nosso cliente em que estabelecimento?" value={f.cliNossoClienteEstab} onChange={(v) => set("cliNossoClienteEstab", v)} />
+          <Campo label="Foi nosso cliente em que estabelecimento?" value={f.cliFoiNossoClienteEstab} onChange={(v) => set("cliFoiNossoClienteEstab", v)} />
+          <Campo label="Anos de actividade" mono value={f.cliAnosActividade} onChange={(v) => set("cliAnosActividade", v)} />
+          <Opcoes label="Tem outros estabelecimentos?" opcoes={SIM_NAO} value={f.cliOutrosEstab} onChange={(v) => set("cliOutrosEstab", v)} />
+          {f.cliOutrosEstab === "Sim" && (
+            <Campo label="Quais?" value={f.cliOutrosEstabQuais} onChange={(v) => set("cliOutrosEstabQuais", v)} />
+          )}
+          <Campo label="Marca de café que consome" value={f.cliMarcaConsome} onChange={(v) => set("cliMarcaConsome", v)} />
+          <Opcoes label="Propriedade" opcoes={PROPRIEDADES} value={f.cliPropriedade} onChange={(v) => set("cliPropriedade", v)} />
+          <Campo label="Informações comerciais" value={f.cliInformacoesComerciais} onChange={(v) => set("cliInformacoesComerciais", v)} />
+          <Opcoes label="Estabelecimento novo?" opcoes={SIM_NAO} value={f.estabNovo} onChange={(v) => set("estabNovo", v)} />
+          {f.estabNovo === "Não" && (
+            <Campo label="Aberto há quanto tempo?" value={f.estabAbertoHa} onChange={(v) => set("estabAbertoHa", v)} />
+          )}
+          <Campo label="Marca de café que consumia" value={f.estabMarcaCafeConsumia} onChange={(v) => set("estabMarcaCafeConsumia", v)} />
+          <Campo label="Horário — das" type="time" value={f.estabHorarioDas} onChange={(v) => set("estabHorarioDas", v)} />
+          <Campo label="Horário — às" type="time" value={f.estabHorarioAs} onChange={(v) => set("estabHorarioAs", v)} />
+        </div>
+        <div className="grid grid-cols-1 gap-x-6 gap-y-5 px-5 pb-5 sm:grid-cols-2">
+          <AreaTexto label="Parecer sobre o estabelecimento" value={f.parecerEstabelecimento} onChange={(v) => set("parecerEstabelecimento", v)} rows={3} />
+          <AreaTexto label="Parecer sobre o cliente" value={f.parecerCliente} onChange={(v) => set("parecerCliente", v)} rows={3} />
+        </div>
+      </Seccao>
+    </>
+  );
+
+  /* ---------- separador 4 — pedido de investimento ---------- */
+
+  function setItens(campo: keyof Ficha, itens: Item[]) {
+    set(campo, itens as Ficha[typeof campo]);
+  }
+
+  function TabelaItens({
+    titulo,
+    campoModo,
+    campoItens,
+  }: {
+    titulo: string;
+    campoModo: keyof Ficha;
+    campoItens: keyof Ficha;
+  }) {
+    const itens = f[campoItens] as Item[];
+    const actualizar = (itemId: string, k: keyof Item, v: string) =>
+      setItens(campoItens, itens.map((it) => (it.id === itemId ? { ...it, [k]: v } : it)));
+    return (
+      <div className="border-b border-line p-5 last:border-b-0">
+        <div className="mb-3 flex flex-wrap items-center gap-3">
+          <h3 className="text-sm font-semibold">{titulo}</h3>
+          <button
+            onClick={() => setItens(campoItens, [...itens, novoItem()])}
+            className="no-print ml-auto rounded-md border border-line bg-paper px-3 py-1.5 text-sm font-medium hover:bg-rail"
+          >
+            + Adicionar
+          </button>
+        </div>
+        <Opcoes
+          label="Modo de cedência"
+          opcoes={MODOS_INVESTIMENTO}
+          value={String(f[campoModo] ?? "")}
+          onChange={(v) => set(campoModo, v as Ficha[typeof campoModo])}
+        />
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full min-w-[820px] border-collapse text-sm">
+            <thead>
+              <tr className="border-b border-line text-left font-mono text-[11px] uppercase tracking-wide text-inksoft">
+                <th className="py-2 pr-3 font-medium">Qt.</th>
+                <th className="py-2 pr-3 font-medium">Descrição</th>
+                <th className="py-2 pr-3 font-medium">Referência</th>
+                <th className="py-2 pr-3 font-medium">Cor</th>
+                <th className="py-2 pr-3 font-medium">Largura</th>
+                <th className="py-2 pr-3 font-medium">Avanço</th>
+                <th className="py-2 font-medium">Altura</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-line">
+              {itens.map((it) => (
+                <tr key={it.id}>
+                  <td className="py-1 pr-3"><input value={it.qtd} onChange={(e) => actualizar(it.id, "qtd", e.target.value)} className={`${celaCls} w-14 text-right font-mono`} /></td>
+                  <td className="py-1 pr-3"><input value={it.descricao} onChange={(e) => actualizar(it.id, "descricao", e.target.value)} className={celaCls} /></td>
+                  <td className="py-1 pr-3"><input value={it.ref} onChange={(e) => actualizar(it.id, "ref", e.target.value)} className={`${celaCls} w-28 font-mono`} /></td>
+                  <td className="py-1 pr-3"><input value={it.cor} onChange={(e) => actualizar(it.id, "cor", e.target.value)} className={`${celaCls} w-24`} /></td>
+                  <td className="py-1 pr-3"><input value={it.largura} onChange={(e) => actualizar(it.id, "largura", e.target.value)} className={`${celaCls} w-20 font-mono`} /></td>
+                  <td className="py-1 pr-3"><input value={it.avanco} onChange={(e) => actualizar(it.id, "avanco", e.target.value)} className={`${celaCls} w-20 font-mono`} /></td>
+                  <td className="py-1"><input value={it.altura} onChange={(e) => actualizar(it.id, "altura", e.target.value)} className={`${celaCls} w-20 font-mono`} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  }
+
+  const aba4 = (
+    <>
+      {identificacaoBloqueada}
+
+      <Seccao numero={1} titulo="Identificação" total={4}>
+        {dadosClienteBloqueados}
+        <div className="grid grid-cols-1 gap-x-6 gap-y-5 px-5 pb-5 sm:grid-cols-2 lg:grid-cols-3">
+          <Campo label="N.º do Pedido de Investimento" mono value={f.piNumero} onChange={(v) => set("piNumero", v)} />
+          <Opcoes label="Já consumia café Torrié?" opcoes={SIM_NAO} value={f.piJaConsumiaTorrie} onChange={(v) => set("piJaConsumiaTorrie", v)} />
+          <Campo label="Data" type="date" value={f.piData} onChange={(v) => set("piData", v)} />
+        </div>
+      </Seccao>
+
+      <Seccao numero={2} titulo="Material a Colocar no Cliente" total={4}>
+        <TabelaItens titulo="Máquinas" campoModo="piMaquinasModo" campoItens="piMaquinas" />
+        <TabelaItens titulo="Mobiliário" campoModo="piMobiliarioModo" campoItens="piMobiliario" />
+        <TabelaItens titulo="Toldos" campoModo="piToldosModo" campoItens="piToldos" />
+        <TabelaItens titulo="Reclames" campoModo="piReclamesModo" campoItens="piReclames" />
+        <TabelaItens titulo="Outros" campoModo="piOutrosModo" campoItens="piOutros" />
+      </Seccao>
+
+      <Seccao numero={3} titulo="Condições Acordadas" total={4}>
+        <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
+          <Campo label="Contrato (anos)" mono value={f.piContrato} onChange={(v) => set("piContrato", v)} />
+          <Campo label="Média mensal (kg)" mono value={f.piMediaMensal} onChange={(v) => set("piMediaMensal", v)} />
+          <Campo label="Lote" value={f.piLote} onChange={(v) => set("piLote", v)} />
+          <Campo label="Bónus" value={f.piBonus} onChange={(v) => set("piBonus", v)} />
+          <Campo label="Dizeres a aplicar" className="lg:col-span-2" value={f.piDizeres} onChange={(v) => set("piDizeres", v)} />
+        </div>
+        <div className="px-5 pb-5">
+          <AreaTexto label="Observações" value={f.piObservacoes} onChange={(v) => set("piObservacoes", v)} rows={3} />
+        </div>
+      </Seccao>
+
+      <Seccao numero={4} titulo="Assinaturas e Controlo Interno" total={4}>
+        <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
+          <Campo label="Assinatura do cliente" value={f.piAssinaturaCliente} onChange={(v) => set("piAssinaturaCliente", v)} />
+          <Campo label="Assinatura do vendedor" value={f.piAssinaturaVendedor} onChange={(v) => set("piAssinaturaVendedor", v)} />
+          <Campo label="Assinatura do inspector" value={f.piAssinaturaInspector} onChange={(v) => set("piAssinaturaInspector", v)} />
+          <Campo label="Aprovação JMV" value={f.piAprovacaoJMV} onChange={(v) => set("piAprovacaoJMV", v)} />
+          <Campo label="Data de aprovação" type="date" value={f.piDataAprovacao} onChange={(v) => set("piDataAprovacao", v)} />
+          <Campo label="Data de recepção" type="date" value={f.piDataRecepcao} onChange={(v) => set("piDataRecepcao", v)} />
+          <Campo label="N.º de requisição" mono value={f.piNumRequisicao} onChange={(v) => set("piNumRequisicao", v)} />
+          <Campo label="Data de entrega ao SAC" type="date" value={f.piDataEntregaSAC} onChange={(v) => set("piDataEntregaSAC", v)} />
+          <Campo label="N.º do pedido de compra" mono value={f.piNumPedidoCompra} onChange={(v) => set("piNumPedidoCompra", v)} />
+          <Campo label="Custo (€)" mono value={f.piCusto} onChange={(v) => set("piCusto", v)} />
+        </div>
+      </Seccao>
+    </>
+  );
+
+  const abas = [aba1, aba2, aba3, aba4];
 
   return (
     <div className="min-h-screen bg-rail text-ink antialiased">
@@ -127,207 +681,33 @@ function Formulario() {
                 Ficha de Cliente · Mercado Interno
               </p>
               <h1 className="text-2xl font-semibold tracking-tight text-balance">
-                {ficha.firma || "Nova ficha de cliente"}
+                {f.firma || "Nova ficha de cliente"}
               </h1>
             </div>
             <p className="font-mono text-[11px] text-inksoft">
-              {ficha.numeroCliente ? `N.º Cliente ${ficha.numeroCliente} · ` : ""}
-              {TOTAL_SECCOES} secções
+              {f.numeroCliente ? `N.º Cliente ${f.numeroCliente} · ` : ""}4 separadores
             </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-x-6 gap-y-5 border-b border-line p-5 sm:grid-cols-2 lg:grid-cols-4">
-            <Campo label="N.º Cliente" mono obrigatorio erro={erro} value={ficha.numeroCliente} onChange={(v) => set("numeroCliente", v)} />
-            <Campo label="Ex Cliente N.º" mono value={ficha.exClienteNumero} onChange={(v) => set("exClienteNumero", v)} />
-            <Campo
-              label="Área de Vendas"
-              mono
-              obrigatorio
-              erro={erro}
-              value={ficha.area}
-              onChange={(v) => set("area", v.replace(/\D/g, "").slice(0, 3))}
-            />
-            <Campo label="Inspector" obrigatorio erro={erro} value={ficha.inspector} onChange={(v) => set("inspector", v)} />
-          </div>
-
-          <Seccao numero={1} titulo="Dados do Cliente" total={TOTAL_SECCOES}>
-            <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
-              <Campo label="Firma do Cliente" obrigatorio erro={erro} value={ficha.firma} onChange={(v) => set("firma", v)} />
-              <Campo label="Nome do Estabelecimento" obrigatorio erro={erro} value={ficha.nomeEstabelecimento} onChange={(v) => set("nomeEstabelecimento", v)} />
-              <Campo label="N.º de Contribuinte" mono obrigatorio erro={erro} value={ficha.contribuinte} onChange={(v) => set("contribuinte", v)} />
-              <Campo label="Morada" className="lg:col-span-2" obrigatorio erro={erro} value={ficha.morada} onChange={(v) => set("morada", v)} />
-              <Campo
-                label="Código Postal"
-                mono
-                obrigatorio
-                erro={erro}
-                value={ficha.codigoPostal}
-                onChange={(v) => set("codigoPostal", formatarCodigoPostal(v))}
-              />
-              <Campo label="Localidade" obrigatorio erro={erro} value={ficha.localidade} onChange={(v) => set("localidade", v)} />
-              <Opcoes label="Região" opcoes={REGIOES} obrigatorio erro={erro} value={ficha.regiao} onChange={(v) => set("regiao", v)} />
-              <Campo label="País" obrigatorio erro={erro} value={ficha.pais} onChange={(v) => set("pais", v)} />
-              <Campo label="Pessoa a Contactar" obrigatorio erro={erro} value={ficha.pessoaContactar} onChange={(v) => set("pessoaContactar", v)} />
-              <Campo label="Dia de Descanso" obrigatorio erro={erro} value={ficha.diaDescanso} onChange={(v) => set("diaDescanso", v)} />
-              <CampoTelefone label="Telefone" obrigatorio erro={erro} value={ficha.telefone} onChange={(v) => set("telefone", v)} />
-              <CampoEmail label="E-mail" obrigatorio erro={erro} value={ficha.email} onChange={(v) => set("email", v)} />
-            </div>
-          </Seccao>
-
-          <Seccao numero={2} titulo="Canal / Sector de Actividade / Grupo de Clientes" total={TOTAL_SECCOES}>
-            <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-3">
-              <Opcoes label="Canal de Distribuição" opcoes={CANAIS} obrigatorio erro={erro} value={ficha.canal} onChange={(v) => set("canal", v)} />
-              <div className="space-y-4">
-                <Opcoes label="Sector de Actividade" opcoes={SECTORES} obrigatorio erro={erro} value={ficha.sector} onChange={(v) => set("sector", v)} />
-                {ficha.sector === "Outro" && (
-                  <Campo label="Qual?" obrigatorio erro={erro} value={ficha.sectorOutro} onChange={(v) => set("sectorOutro", v)} />
-                )}
-              </div>
-              <div className="space-y-4">
-                <Opcoes label="Grupo de Clientes" opcoes={GRUPOS} obrigatorio erro={erro} value={ficha.grupo} onChange={(v) => set("grupo", v)} />
-                {ficha.grupo === "Outro" && (
-                  <>
-                    <Opcoes
-                      label="Qual grupo?"
-                      opcoes={GRUPOS_CLIENTES}
-                      obrigatorio
-                      erro={erro}
-                      value={ficha.grupoLista}
-                      onChange={(v) => set("grupoLista", v)}
-                    />
-                    {ficha.grupoLista === "Outros" && (
-                      <Campo label="Indique o grupo" obrigatorio erro={erro} value={ficha.grupoQual} onChange={(v) => set("grupoQual", v)} />
-                    )}
-                  </>
-                )}
-              </div>
-            </div>
-          </Seccao>
-
-          <Seccao numero={3} titulo="Dados Financeiros" total={TOTAL_SECCOES}>
-            <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2">
-              <Campo label="Condições de Pagamento" obrigatorio erro={erro} value={ficha.condicoesPagamento} onChange={(v) => set("condicoesPagamento", v)} />
-              <Campo label="Bancos" value={ficha.bancos} onChange={(v) => set("bancos", v)} />
-            </div>
-          </Seccao>
-
-          {eCafes && (
-          <Seccao numero={4} titulo="Dados Normanvi (só clientes de Café HORECA)" total={TOTAL_SECCOES}>
-            <div className="space-y-5 p-5">
-              <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-3">
-                <Campo label="Máquina de Café — Marca - Modelo" value={ficha.maquinaCafe} onChange={(v) => set("maquinaCafe", v)} />
-                <Campo label="Moinho — Marca - Modelo" value={ficha.moinho} onChange={(v) => set("moinho", v)} />
-                <Campo label="Máquina de Lavar — Marca - Modelo" value={ficha.maquinaLavar} onChange={(v) => set("maquinaLavar", v)} />
-              </div>
-              <p className="font-mono text-[11px] text-inksoft">
-                Preencher apenas se o equipamento a prestar assistência não for propriedade da JMV.
-              </p>
-              <Opcoes
-                label="Sistema de Débito"
-                opcoes={SISTEMAS_DEBITO}
-                value={ficha.sistemaDebito}
-                onChange={(v) => set("sistemaDebito", v)}
-              />
-            </div>
-          </Seccao>
-          )}
-
-          <Seccao numero={5} titulo="Local de Entrega da Mercadoria" total={TOTAL_SECCOES}>
-            <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
-              <Campo label="Morada" className="lg:col-span-2" value={ficha.entregaMorada} onChange={(v) => set("entregaMorada", v)} />
-              <Campo
-                label="Código Postal"
-                mono
-                value={ficha.entregaCodigoPostal}
-                onChange={(v) => set("entregaCodigoPostal", formatarCodigoPostal(v))}
-              />
-              <Campo label="Localidade" value={ficha.entregaLocalidade} onChange={(v) => set("entregaLocalidade", v)} />
-              <Campo label="Pessoa a Contactar" value={ficha.entregaPessoaContactar} onChange={(v) => set("entregaPessoaContactar", v)} />
-              <CampoTelefone label="Telefone" value={ficha.entregaTelefone} onChange={(v) => set("entregaTelefone", v)} />
-            </div>
-          </Seccao>
-
-          <Seccao numero={6} titulo="Observações" total={TOTAL_SECCOES}>
-            <div className="space-y-4 p-5">
-              <AreaTexto value={ficha.observacoes} onChange={(v) => set("observacoes", v)} rows={5} />
-              <label className="flex items-start gap-3 rounded-md border border-line bg-panel px-3 py-3 text-sm">
-                <input
-                  type="checkbox"
-                  checked={ficha.declaracao}
-                  onChange={(e) => set("declaracao", e.target.checked)}
-                  className="mt-0.5 size-4 accent-[var(--primary)]"
-                />
-                Declaro que me foi exibida a declaração de início de actividade fiscal / cartão de
-                contribuinte do cliente, que verifiquei estar em conformidade.
-              </label>
-            </div>
-          </Seccao>
-
-          <Seccao
-            numero={7}
-            titulo="Condições de Fornecimento"
-            total={TOTAL_SECCOES}
-            extra={
+          <div className="no-print flex flex-wrap gap-1 border-b border-line bg-panel px-3 py-3">
+            {SEPARADORES.map((t, i) => (
               <button
-                onClick={() => set("linhas", [...ficha.linhas, novaLinha()])}
-                className="no-print ml-auto flex items-center gap-1.5 rounded-md border border-line bg-paper px-3 py-2 text-sm font-medium text-ink hover:bg-rail"
+                key={t}
+                onClick={() => setAba(i)}
+                className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                  aba === i
+                    ? "bg-ink text-paper"
+                    : "border border-line bg-paper text-inksoft hover:bg-rail"
+                }`}
               >
-                <span className="font-mono leading-none">+</span> Adicionar linha
+                {t}
               </button>
-            }
-          >
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[900px] border-collapse text-sm">
-                <thead>
-                  <tr className="border-b border-line text-left font-mono text-[11px] uppercase tracking-wide text-inksoft">
-                    <th className="px-5 py-2.5 font-medium">Cód.</th>
-                    <th className="px-3 py-2.5 font-medium">Designação</th>
-                    <th className="px-3 py-2.5 text-right font-medium">Qt. Venda</th>
-                    <th className="px-3 py-2.5 text-right font-medium">Preço</th>
-                    <th className="px-3 py-2.5 text-right font-medium">Desc. Com.</th>
-                    <th className="px-3 py-2.5 font-medium">Bónus Cód.</th>
-                    <th className="px-3 py-2.5 font-medium">Bónus Designação</th>
-                    <th className="px-5 py-2.5 text-right font-medium">Qt. Bónus</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-line">
-                  {ficha.linhas.map((l) => (
-                    <tr key={l.id} className="align-middle">
-                      <td className="px-5 py-1">
-                        <input value={l.cod} onChange={(e) => setLinha(l.id, "cod", e.target.value)} className={`${celaCls} w-24 font-mono`} />
-                      </td>
-                      <td className="px-3 py-1">
-                        <input value={l.designacao} onChange={(e) => setLinha(l.id, "designacao", e.target.value)} className={celaCls} />
-                      </td>
-                      <td className="px-3 py-1">
-                        <input value={l.qtVenda} onChange={(e) => setLinha(l.id, "qtVenda", e.target.value)} className={`${celaCls} w-16 text-right font-mono`} />
-                      </td>
-                      <td className="px-3 py-1">
-                        <input value={l.preco} onChange={(e) => setLinha(l.id, "preco", e.target.value)} className={`${celaCls} w-20 text-right font-mono`} />
-                      </td>
-                      <td className="px-3 py-1">
-                        <input value={l.desconto} onChange={(e) => setLinha(l.id, "desconto", e.target.value)} className={`${celaCls} w-16 text-right font-mono`} />
-                      </td>
-                      <td className="px-3 py-1">
-                        <input value={l.bonusCod} onChange={(e) => setLinha(l.id, "bonusCod", e.target.value)} className={`${celaCls} w-24 font-mono`} />
-                      </td>
-                      <td className="px-3 py-1">
-                        <input value={l.bonusDesignacao} onChange={(e) => setLinha(l.id, "bonusDesignacao", e.target.value)} className={celaCls} />
-                      </td>
-                      <td className="px-5 py-1">
-                        <input value={l.qtBonus} onChange={(e) => setLinha(l.id, "qtBonus", e.target.value)} className={`${celaCls} w-16 text-right font-mono`} />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <p className="px-5 pb-4 font-mono text-[11px] text-inksoft">
-              Preencher o preço apenas caso seja diferente do preço de tabela geral.
-            </p>
-          </Seccao>
+            ))}
+          </div>
 
-          <div className="no-print flex flex-col-reverse gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
+          {abas[aba]}
+
+          <div className="no-print flex flex-col-reverse gap-3 border-t border-line p-5 sm:flex-row sm:items-center sm:justify-between">
             <p className="font-mono text-[11px] text-inksoft">
               {erro && faltam.length > 0
                 ? `Faltam ${faltam.length} campos obrigatórios.`
