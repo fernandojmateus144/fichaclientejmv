@@ -34,6 +34,33 @@ export function Seccao({
   );
 }
 
+export function Bloqueado({
+  label,
+  value,
+  className,
+  mono,
+}: {
+  label: string;
+  value: string;
+  className?: string;
+  mono?: boolean;
+}) {
+  return (
+    <label className={`block ${className ?? ""}`}>
+      <span className="mb-1.5 block text-xs font-medium text-inksoft">
+        {label}
+        <span className="ml-1 font-mono text-[10px] uppercase tracking-wide text-inksoft/70">bloqueado</span>
+      </span>
+      <input
+        readOnly
+        tabIndex={-1}
+        value={value}
+        className={`${inputCls} cursor-not-allowed bg-panel text-inksoft ${mono ? "font-mono" : ""}`}
+      />
+    </label>
+  );
+}
+
 export function Obrigatorio() {
   return <span className="ml-0.5 text-warn">*</span>;
 }
