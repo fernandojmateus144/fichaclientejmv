@@ -259,3 +259,80 @@ export function Opcoes({
     </label>
   );
 }
+
+export function SimNao({
+  label,
+  value,
+  onChange,
+  className,
+  obrigatorio,
+  erro,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  className?: string;
+  obrigatorio?: boolean;
+  erro?: boolean;
+}) {
+  const falta = Boolean(obrigatorio && erro && !value.trim());
+  const caixa = (opcao: string) => (
+    <label
+      key={opcao}
+      className={`flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2.5 text-sm ${
+        value === opcao ? "border-primary bg-primary/5 font-medium" : "border-line bg-paper"
+      }`}
+    >
+      <input
+        type="checkbox"
+        checked={value === opcao}
+        onChange={() => onChange(value === opcao ? "" : opcao)}
+        className="size-4 accent-[var(--primary)]"
+      />
+      {opcao}
+    </label>
+  );
+  return (
+    <div className={`block ${className ?? ""}`}>
+      <span className="mb-1.5 block text-xs font-medium text-inksoft">
+        {label}
+        {obrigatorio && <Obrigatorio />}
+      </span>
+      <div className="flex gap-2">{["Sim", "Não"].map(caixa)}</div>
+      {falta && <span className="mt-1 block font-mono text-[11px] text-warn">Campo obrigatório.</span>}
+    </div>
+  );
+}
+
+export function TextoExpansivel({
+  value,
+  onChange,
+  placeholder,
+  className,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  className?: string;
+}) {
+  return (
+    <textarea
+      rows={1}
+      value={value}
+      placeholder={placeholder}
+      onChange={(e) => onChange(e.target.value)}
+      ref={(el) => {
+        if (el) {
+          el.style.height = "auto";
+          el.style.height = `${el.scrollHeight}px`;
+        }
+      }}
+      onInput={(e) => {
+        const el = e.currentTarget;
+        el.style.height = "auto";
+        el.style.height = `${el.scrollHeight}px`;
+      }}
+      className={`w-full resize-none overflow-hidden rounded border border-line bg-paper px-2 py-2.5 text-sm leading-snug outline-none focus:border-primary ${className ?? ""}`}
+    />
+  );
+}
