@@ -121,8 +121,10 @@ export type Ficha = {
   prospCaptar: string;
   prospObservacoes: string;
   prospVisitas: string;
+  prospVisitasDatas: string[];
 
   // 3 — Ficha de Cliente para Contrato
+  contratoTipoCliente: string;
   contratoNumeroCC: string;
   contratoConcelho: string;
   indNaturalidadePt: string;
@@ -166,6 +168,8 @@ export type Ficha = {
   piReclames: Item[];
   piOutrosModo: string;
   piOutros: Item[];
+  piContratoSim: string;
+  piTotalQuilos: string;
   piContrato: string;
   piMediaMensal: string;
   piLote: string;
@@ -173,6 +177,7 @@ export type Ficha = {
   piDizeres: string;
   piData: string;
   piAssinaturaCliente: string;
+  piAssinaturaClienteImg: string;
   piAprovacaoJMV: string;
   piDataAprovacao: string;
   piObservacoes: string;
@@ -189,6 +194,7 @@ export const SIM_NAO = ["Sim", "Não"];
 export const VINCULOS = ["Dono do imóvel", "Dono do negócio", "Explorador", "Subexplorador"];
 export const TIPOS_ESTAB = ["Café", "Restaurante", "Snack-Bar", "Bar", "Empresa", "Hotel", "Outro"];
 export const ESTADOS_CIVIS = ["Solteiro(a)", "Casado(a)", "União de facto", "Divorciado(a)", "Viúvo(a)"];
+export const TIPOS_CLIENTE = ["Cliente em Nome Individual", "Cliente Sociedade / Colectividade"];
 export const PROPRIEDADES = ["Proprietário do imóvel", "Dono do trespasse", "Explorador"];
 export const MODOS_INVESTIMENTO = [
   "Empréstimo gratuito pelo tempo de consumo de cafés Torrié",
@@ -419,7 +425,9 @@ export function novaFicha(): Ficha {
     prospCaptar: "",
     prospObservacoes: "",
     prospVisitas: "",
+    prospVisitasDatas: [],
 
+    contratoTipoCliente: "",
     contratoNumeroCC: "",
     contratoConcelho: "",
     indNaturalidadePt: "",
@@ -462,6 +470,8 @@ export function novaFicha(): Ficha {
     piReclames: [novoItem()],
     piOutrosModo: "",
     piOutros: [novoItem()],
+    piContratoSim: "",
+    piTotalQuilos: "",
     piContrato: "",
     piMediaMensal: "",
     piLote: "",
@@ -469,6 +479,7 @@ export function novaFicha(): Ficha {
     piDizeres: "",
     piData: "",
     piAssinaturaCliente: "",
+    piAssinaturaClienteImg: "",
     piAprovacaoJMV: "",
     piDataAprovacao: "",
     piObservacoes: "",
@@ -557,4 +568,13 @@ export function totalFicha(ficha: Ficha) {
 
 export function euros(v: number) {
   return v.toLocaleString("pt-PT", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+export function proximoNumeroPI(area: string, idActual?: string) {
+  const usados = lerFichas()
+    .filter((f) => f.id !== idActual)
+    .map((f) => parseInt((f.piNumero || "").split("/")[0] ?? "", 10))
+    .filter((n) => Number.isFinite(n));
+  const seguinte = (usados.length ? Math.max(...usados) : 0) + 1;
+  return `${String(seguinte).padStart(4, "0")}/${area || "—"}`;
 }
