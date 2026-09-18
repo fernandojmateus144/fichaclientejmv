@@ -120,7 +120,6 @@ export type Ficha = {
   prospCondicoes: string;
   prospCaptar: string;
   prospObservacoes: string;
-  prospVisitas: string;
   prospVisitasDatas: string[];
 
   // 3 — Ficha de Cliente para Contrato
@@ -424,7 +423,6 @@ export function novaFicha(): Ficha {
     prospCondicoes: "",
     prospCaptar: "",
     prospObservacoes: "",
-    prospVisitas: "",
     prospVisitasDatas: [],
 
     contratoTipoCliente: "",

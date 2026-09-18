@@ -9,7 +9,10 @@ import {
   CampoTelefone,
   Opcoes,
   Seccao,
+  SimNao,
+  TextoExpansivel,
 } from "@/components/campos";
+import { Assinatura } from "@/components/assinatura";
 import {
   CANAIS,
   ESTADOS_CIVIS,
@@ -19,8 +22,8 @@ import {
   PROPRIEDADES,
   REGIOES,
   SECTORES,
-  SIM_NAO,
   SISTEMAS_DEBITO,
+  TIPOS_CLIENTE,
   TIPOS_ESTAB,
   VINCULOS,
   formatarCodigoPostal,
@@ -30,6 +33,7 @@ import {
   novaLinha,
   novoItem,
   novoSocio,
+  proximoNumeroPI,
   telefoneCompleto,
   type Ficha,
   type Item,
@@ -102,10 +106,10 @@ function Formulario() {
   };
 
   const eCafes = f.sector === "Cafés";
+  const bloqueadoSe = (valor: string) => valor.trim().length > 0;
 
   function emFalta(x: Ficha) {
     const base: (keyof Ficha)[] = [
-      "numeroCliente",
       "area",
       "inspector",
       "firma",
@@ -128,12 +132,22 @@ function Formulario() {
     const faltam = base.filter((k) => !String(x[k] ?? "").trim());
     if (x.sector === "Outro" && !x.sectorOutro.trim()) faltam.push("sectorOutro");
     if (x.grupo === "Outro" && !x.grupoLista.trim()) faltam.push("grupoLista");
-    if (x.grupo === "Outro" && x.grupoLista === "Outros" && !x.grupoQual.trim()) faltam.push("grupoQual");
+    if (x.grupo === "Outro" && x.grupoLista === "Outros" && !x.grupoQual.trim())
+      faltam.push("grupoQual");
     return faltam;
   }
 
   const faltam = emFalta(f);
-  const faltamAba1 = faltam.filter((k) => k !== "canal" && k !== "sector" && k !== "grupo" && k !== "condicoesPagamento" && k !== "sectorOutro" && k !== "grupoLista" && k !== "grupoQual");
+  const faltamAba1 = faltam.filter(
+    (k) =>
+      k !== "canal" &&
+      k !== "sector" &&
+      k !== "grupo" &&
+      k !== "condicoesPagamento" &&
+      k !== "sectorOutro" &&
+      k !== "grupoLista" &&
+      k !== "grupoQual",
+  );
 
   function guardar() {
     if (!ficha) return;
@@ -149,55 +163,82 @@ function Formulario() {
     if (id === "nova") navigate({ to: "/ficha/$id", params: { id: gravada.id }, replace: true });
   }
 
-  /* ---------- blocos reutilizados ---------- */
+  /* ---------- helpers: campo bloqueia se já tiver valor ---------- */
+  function CampoOuBloqueado(props: {
+    label: string;
+    valor: string;
+    onChange: (v: string) => void;
+    mono?: boolean;
+    type?: string;
+    className?: string;
+    obrigatorio?: boolean;
+    erro?: boolean;
+  }) {
+    if (bloqueadoSe(props.valor))
+      return <Bloqueado label={props.label} value={props.valor} className={props.className} mono={props.mono} />;
+    return <Campo {...props} value={props.valor} />;
+  }
 
-  const identificacaoEditavel = (
-    <div className="grid grid-cols-1 gap-x-6 gap-y-5 border-b border-line p-5 sm:grid-cols-2 lg:grid-cols-4">
-      <Campo label="N.º Cliente" mono obrigatorio erro={erro} value={f.numeroCliente} onChange={(v) => set("numeroCliente", v)} />
-      <Campo label="Ex Cliente N.º" mono value={f.exClienteNumero} onChange={(v) => set("exClienteNumero", v)} />
-      <Campo
-        label="Área de Vendas"
-        mono
-        obrigatorio
-        erro={erro}
-        value={f.area}
-        onChange={(v) => set("area", v.replace(/\D/g, "").slice(0, 3))}
-      />
-      <Campo label="Inspector" obrigatorio erro={erro} value={f.inspector} onChange={(v) => set("inspector", v)} />
-    </div>
-  );
+  function CampoTelefoneOuBloqueado(props: {
+    label: string;
+    valor: string;
+    onChange: (v: string) => void;
+    className?: string;
+    obrigatorio?: boolean;
+    erro?: boolean;
+  }) {
+    if (bloqueadoSe(props.valor))
+      return <Bloqueado label={props.label} value={telefoneCompleto(props.valor)} className={props.className} mono />;
+    return <CampoTelefone {...props} value={props.valor} />;
+  }
 
-  const identificacaoBloqueada = (
-    <div className="grid grid-cols-1 gap-x-6 gap-y-5 border-b border-line p-5 sm:grid-cols-2 lg:grid-cols-4">
-      <Bloqueado label="N.º Cliente" mono value={f.numeroCliente} />
-      <Bloqueado label="Ex Cliente N.º" mono value={f.exClienteNumero} />
-      <Bloqueado label="Área de Vendas" mono value={f.area} />
-      <Bloqueado label="Inspector" value={f.inspector} />
-    </div>
-  );
+  function CampoEmailOuBloqueado(props: {
+    label: string;
+    valor: string;
+    onChange: (v: string) => void;
+    className?: string;
+    obrigatorio?: boolean;
+    erro?: boolean;
+  }) {
+    if (bloqueadoSe(props.valor))
+      return <Bloqueado label={props.label} value={props.valor} className={props.className} />;
+    return <CampoEmail {...props} value={props.valor} />;
+  }
 
-  const dadosClienteBloqueados = (
-    <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
-      <Bloqueado label="Firma do Cliente" value={f.firma} />
-      <Bloqueado label="Nome do Estabelecimento" value={f.nomeEstabelecimento} />
-      <Bloqueado label="N.º de Contribuinte" mono value={f.contribuinte} />
-      <Bloqueado label="Morada" className="lg:col-span-2" value={f.morada} />
-      <Bloqueado label="Código Postal" mono value={f.codigoPostal} />
-      <Bloqueado label="Localidade" value={f.localidade} />
-      <Bloqueado label="Região" value={f.regiao} />
-      <Bloqueado label="País" value={f.pais} />
-      <Bloqueado label="Pessoa a Contactar" value={f.pessoaContactar} />
-      <Bloqueado label="Dia de Descanso" value={f.diaDescanso} />
-      <Bloqueado label="Telefone" mono value={telefoneCompleto(f.telefone)} />
-      <Bloqueado label="E-mail" value={f.email} />
-    </div>
-  );
+  function OpcoesOuBloqueado(props: {
+    label: string;
+    opcoes: string[];
+    valor: string;
+    onChange: (v: string) => void;
+    className?: string;
+    obrigatorio?: boolean;
+    erro?: boolean;
+  }) {
+    if (bloqueadoSe(props.valor))
+      return <Bloqueado label={props.label} value={props.valor} className={props.className} />;
+    return <Opcoes {...props} value={props.valor} />;
+  }
 
   /* ---------- separador 1 — prospecção ---------- */
-
   const aba1 = (
     <>
-      {identificacaoEditavel}
+      <div className="grid grid-cols-1 gap-x-6 gap-y-5 border-b border-line p-5 sm:grid-cols-2 lg:grid-cols-4">
+        <Campo
+          label="Área de Vendas"
+          mono
+          obrigatorio
+          erro={erro}
+          value={f.area}
+          onChange={(v) => set("area", v.replace(/\D/g, "").slice(0, 3))}
+        />
+        <Campo
+          label="Inspector"
+          obrigatorio
+          erro={erro}
+          value={f.inspector}
+          onChange={(v) => set("inspector", v)}
+        />
+      </div>
 
       <Seccao numero={1} titulo="Dados do Cliente" total={4}>
         <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -221,20 +262,20 @@ function Formulario() {
           <Campo label="Data" type="date" value={f.prospData} onChange={(v) => set("prospData", v)} />
           <Campo label="Responsável pela Negociação" value={f.prospRespNegociacao} onChange={(v) => set("prospRespNegociacao", v)} />
           <Campo label="Anos de Actividade" mono value={f.prospAnosActividade} onChange={(v) => set("prospAnosActividade", v)} />
-          <Opcoes label="Já foi nosso cliente?" opcoes={SIM_NAO} value={f.prospJaFoiCliente} onChange={(v) => set("prospJaFoiCliente", v)} />
+          <SimNao label="Já foi nosso cliente?" value={f.prospJaFoiCliente} onChange={(v) => set("prospJaFoiCliente", v)} />
           {f.prospJaFoiCliente === "Sim" && (
             <Campo label="Em que estabelecimento?" value={f.prospJaFoiClienteOnde} onChange={(v) => set("prospJaFoiClienteOnde", v)} />
           )}
-          <Opcoes label="Conhece a nossa empresa?" opcoes={SIM_NAO} value={f.prospConheceEmpresa} onChange={(v) => set("prospConheceEmpresa", v)} />
+          <SimNao label="Conhece a nossa empresa?" value={f.prospConheceEmpresa} onChange={(v) => set("prospConheceEmpresa", v)} />
           {f.prospConheceEmpresa === "Sim" && (
             <Campo label="Como?" value={f.prospConheceComo} onChange={(v) => set("prospConheceComo", v)} />
           )}
           <Campo label="Conhece alguém na empresa?" value={f.prospConheceAlguem} onChange={(v) => set("prospConheceAlguem", v)} />
-          <Opcoes label="Tem outros estabelecimentos?" opcoes={SIM_NAO} value={f.prospOutrosEstab} onChange={(v) => set("prospOutrosEstab", v)} />
+          <SimNao label="Tem outros estabelecimentos?" value={f.prospOutrosEstab} onChange={(v) => set("prospOutrosEstab", v)} />
           {f.prospOutrosEstab === "Sim" && (
             <Campo label="Quais?" value={f.prospOutrosEstabQuais} onChange={(v) => set("prospOutrosEstabQuais", v)} />
           )}
-          <Opcoes label="Fez degustação?" opcoes={SIM_NAO} value={f.prospDegustacao} onChange={(v) => set("prospDegustacao", v)} />
+          <SimNao label="Fez degustação?" value={f.prospDegustacao} onChange={(v) => set("prospDegustacao", v)} />
           {f.prospDegustacao === "Sim" && (
             <Campo label="Opinião da degustação" value={f.prospDegustacaoOpiniao} onChange={(v) => set("prospDegustacaoOpiniao", v)} />
           )}
@@ -243,13 +284,13 @@ function Formulario() {
 
       <Seccao numero={3} titulo="Estabelecimento e Vínculo" total={4}>
         <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
-          <Opcoes label="Estabelecimento novo?" opcoes={SIM_NAO} value={f.prospEstabNovo} onChange={(v) => set("prospEstabNovo", v)} />
+          <SimNao label="Estabelecimento novo?" value={f.prospEstabNovo} onChange={(v) => set("prospEstabNovo", v)} />
           {f.prospEstabNovo === "Não" && (
             <Campo label="Aberto há quanto tempo?" value={f.prospAbertoHa} onChange={(v) => set("prospAbertoHa", v)} />
           )}
-          <Opcoes label="Houve trespasse?" opcoes={SIM_NAO} value={f.prospTrespasse} onChange={(v) => set("prospTrespasse", v)} />
+          <SimNao label="Houve trespasse?" value={f.prospTrespasse} onChange={(v) => set("prospTrespasse", v)} />
           <Opcoes label="Vínculo ao estabelecimento" opcoes={VINCULOS} value={f.prospVinculo} onChange={(v) => set("prospVinculo", v)} />
-          <Opcoes label="Tem contrato de arrendamento?" opcoes={SIM_NAO} value={f.prospArrendamento} onChange={(v) => set("prospArrendamento", v)} />
+          <SimNao label="Tem contrato de arrendamento?" value={f.prospArrendamento} onChange={(v) => set("prospArrendamento", v)} />
           {f.prospArrendamento === "Sim" && (
             <>
               <Campo label="Arrendamento até" type="date" value={f.prospArrendamentoAte} onChange={(v) => set("prospArrendamentoAte", v)} />
@@ -274,7 +315,7 @@ function Formulario() {
           <Campo label="Preço (€/kg)" mono value={f.prospPreco} onChange={(v) => set("prospPreco", v)} />
           <Campo label="Desconto (%)" mono value={f.prospDesconto} onChange={(v) => set("prospDesconto", v)} />
           <Campo label="Bónus" value={f.prospBonus} onChange={(v) => set("prospBonus", v)} />
-          <Opcoes label="Tem contrato com o fornecedor actual?" opcoes={SIM_NAO} value={f.prospTemContrato} onChange={(v) => set("prospTemContrato", v)} />
+          <SimNao label="Tem contrato com o fornecedor actual?" value={f.prospTemContrato} onChange={(v) => set("prospTemContrato", v)} />
           {f.prospTemContrato === "Sim" && (
             <>
               <Campo label="Tipo de contrato" value={f.prospContratoTipo} onChange={(v) => set("prospContratoTipo", v)} />
@@ -290,7 +331,6 @@ function Formulario() {
           <Campo label="Reclames" value={f.prospReclames} onChange={(v) => set("prospReclames", v)} />
           <Campo label="Outros" value={f.prospOutros} onChange={(v) => set("prospOutros", v)} />
           <Campo label="Lote a propor" value={f.prospLoteInvestimento} onChange={(v) => set("prospLoteInvestimento", v)} />
-          <Campo label="N.º de visitas efectuadas" mono value={f.prospVisitas} onChange={(v) => set("prospVisitas", v)} />
         </div>
         <div className="grid grid-cols-1 gap-x-6 gap-y-5 px-5 pb-5 sm:grid-cols-2">
           <AreaTexto label="Pontos fracos do estabelecimento" value={f.prospPontosFracos} onChange={(v) => set("prospPontosFracos", v)} rows={3} />
@@ -299,17 +339,76 @@ function Formulario() {
           <AreaTexto label="Observações" value={f.prospObservacoes} onChange={(v) => set("prospObservacoes", v)} rows={3} />
         </div>
       </Seccao>
+
+      {/* Datas de visitas posteriores — additive list */}
+      <div className="border-b border-line p-5">
+        <div className="mb-3 flex flex-wrap items-center gap-3">
+          <h3 className="text-sm font-semibold">Datas de Visitas Posteriores</h3>
+          <button
+            type="button"
+            onClick={() => set("prospVisitasDatas", [...f.prospVisitasDatas, ""])}
+            className="no-print ml-auto flex items-center gap-1.5 rounded-md border border-line bg-paper px-3 py-2 text-sm font-medium text-ink hover:bg-rail"
+          >
+            <span className="font-mono leading-none">+</span> Adicionar data de visita
+          </button>
+        </div>
+        {f.prospVisitasDatas.length === 0 && (
+          <p className="font-mono text-[11px] text-inksoft">Nenhuma data de visita posterior registada.</p>
+        )}
+        <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+          {f.prospVisitasDatas.map((d, i) => (
+            <div key={i} className="flex items-end gap-2">
+              <div className="flex-1">
+                <Campo
+                  label={`Visita ${i + 1}`}
+                  type="date"
+                  value={d}
+                  onChange={(v) =>
+                    set("prospVisitasDatas", f.prospVisitasDatas.map((x, j) => (j === i ? v : x)))
+                  }
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() =>
+                  set("prospVisitasDatas", f.prospVisitasDatas.filter((_, j) => j !== i))
+                }
+                className="no-print mb-1 rounded-md border border-line px-2.5 py-2 font-mono text-[11px] text-warn hover:bg-rail"
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
     </>
   );
 
   /* ---------- separador 2 — abertura SAP ---------- */
-
   const aba2 = (
     <>
-      {identificacaoBloqueada}
+      <div className="grid grid-cols-1 gap-x-6 gap-y-5 border-b border-line p-5 sm:grid-cols-2 lg:grid-cols-4">
+        <Campo label="N.º Cliente" mono obrigatorio erro={erro} value={f.numeroCliente} onChange={(v) => set("numeroCliente", v)} />
+        <Campo label="Ex Cliente N.º" mono value={f.exClienteNumero} onChange={(v) => set("exClienteNumero", v)} />
+        <Bloqueado label="Área de Vendas" mono value={f.area} />
+        <Bloqueado label="Inspector" value={f.inspector} />
+      </div>
 
       <Seccao numero={1} titulo="Dados do Cliente" total={7}>
-        {dadosClienteBloqueados}
+        <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
+          <CampoOuBloqueado label="Firma do Cliente" valor={f.firma} onChange={(v) => set("firma", v)} obrigatorio erro={erro} />
+          <CampoOuBloqueado label="Nome do Estabelecimento" valor={f.nomeEstabelecimento} onChange={(v) => set("nomeEstabelecimento", v)} obrigatorio erro={erro} />
+          <CampoOuBloqueado label="N.º de Contribuinte" valor={f.contribuinte} onChange={(v) => set("contribuinte", v)} mono obrigatorio erro={erro} />
+          <CampoOuBloqueado label="Morada" valor={f.morada} onChange={(v) => set("morada", v)} className="lg:col-span-2" obrigatorio erro={erro} />
+          <CampoOuBloqueado label="Código Postal" valor={f.codigoPostal} onChange={(v) => set("codigoPostal", formatarCodigoPostal(v))} mono obrigatorio erro={erro} />
+          <CampoOuBloqueado label="Localidade" valor={f.localidade} onChange={(v) => set("localidade", v)} obrigatorio erro={erro} />
+          <OpcoesOuBloqueado label="Região" opcoes={REGIOES} valor={f.regiao} onChange={(v) => set("regiao", v)} obrigatorio erro={erro} />
+          <CampoOuBloqueado label="País" valor={f.pais} onChange={(v) => set("pais", v)} obrigatorio erro={erro} />
+          <CampoOuBloqueado label="Pessoa a Contactar" valor={f.pessoaContactar} onChange={(v) => set("pessoaContactar", v)} obrigatorio erro={erro} />
+          <CampoOuBloqueado label="Dia de Descanso" valor={f.diaDescanso} onChange={(v) => set("diaDescanso", v)} obrigatorio erro={erro} />
+          <CampoTelefoneOuBloqueado label="Telefone" valor={f.telefone} onChange={(v) => set("telefone", v)} obrigatorio erro={erro} />
+          <CampoEmailOuBloqueado label="E-mail" valor={f.email} onChange={(v) => set("email", v)} obrigatorio erro={erro} />
+        </div>
       </Seccao>
 
       <Seccao numero={2} titulo="Canal / Sector de Actividade / Grupo de Clientes" total={7}>
@@ -414,30 +513,14 @@ function Formulario() {
             <tbody className="divide-y divide-line">
               {f.linhas.map((l) => (
                 <tr key={l.id} className="align-middle">
-                  <td className="px-5 py-1">
-                    <input value={l.cod} onChange={(e) => setLinha(l.id, "cod", e.target.value)} className={`${celaCls} w-24 font-mono`} />
-                  </td>
-                  <td className="px-3 py-1">
-                    <input value={l.designacao} onChange={(e) => setLinha(l.id, "designacao", e.target.value)} className={celaCls} />
-                  </td>
-                  <td className="px-3 py-1">
-                    <input value={l.qtVenda} onChange={(e) => setLinha(l.id, "qtVenda", e.target.value)} className={`${celaCls} w-16 text-right font-mono`} />
-                  </td>
-                  <td className="px-3 py-1">
-                    <input value={l.preco} onChange={(e) => setLinha(l.id, "preco", e.target.value)} className={`${celaCls} w-20 text-right font-mono`} />
-                  </td>
-                  <td className="px-3 py-1">
-                    <input value={l.desconto} onChange={(e) => setLinha(l.id, "desconto", e.target.value)} className={`${celaCls} w-16 text-right font-mono`} />
-                  </td>
-                  <td className="px-3 py-1">
-                    <input value={l.bonusCod} onChange={(e) => setLinha(l.id, "bonusCod", e.target.value)} className={`${celaCls} w-24 font-mono`} />
-                  </td>
-                  <td className="px-3 py-1">
-                    <input value={l.bonusDesignacao} onChange={(e) => setLinha(l.id, "bonusDesignacao", e.target.value)} className={celaCls} />
-                  </td>
-                  <td className="px-5 py-1">
-                    <input value={l.qtBonus} onChange={(e) => setLinha(l.id, "qtBonus", e.target.value)} className={`${celaCls} w-16 text-right font-mono`} />
-                  </td>
+                  <td className="px-5 py-1"><input value={l.cod} onChange={(e) => setLinha(l.id, "cod", e.target.value)} className={`${celaCls} w-24 font-mono`} /></td>
+                  <td className="px-3 py-1"><input value={l.designacao} onChange={(e) => setLinha(l.id, "designacao", e.target.value)} className={celaCls} /></td>
+                  <td className="px-3 py-1"><input value={l.qtVenda} onChange={(e) => setLinha(l.id, "qtVenda", e.target.value)} className={`${celaCls} w-16 text-right font-mono`} /></td>
+                  <td className="px-3 py-1"><input value={l.preco} onChange={(e) => setLinha(l.id, "preco", e.target.value)} className={`${celaCls} w-20 text-right font-mono`} /></td>
+                  <td className="px-3 py-1"><input value={l.desconto} onChange={(e) => setLinha(l.id, "desconto", e.target.value)} className={`${celaCls} w-16 text-right font-mono`} /></td>
+                  <td className="px-3 py-1"><input value={l.bonusCod} onChange={(e) => setLinha(l.id, "bonusCod", e.target.value)} className={`${celaCls} w-24 font-mono`} /></td>
+                  <td className="px-3 py-1"><input value={l.bonusDesignacao} onChange={(e) => setLinha(l.id, "bonusDesignacao", e.target.value)} className={celaCls} /></td>
+                  <td className="px-5 py-1"><input value={l.qtBonus} onChange={(e) => setLinha(l.id, "qtBonus", e.target.value)} className={`${celaCls} w-16 text-right font-mono`} /></td>
                 </tr>
               ))}
             </tbody>
@@ -451,96 +534,116 @@ function Formulario() {
   );
 
   /* ---------- separador 3 — ficha para contrato ---------- */
-
   const aba3 = (
     <>
-      {identificacaoBloqueada}
+      <div className="grid grid-cols-1 gap-x-6 gap-y-5 border-b border-line p-5 sm:grid-cols-2 lg:grid-cols-4">
+        <Bloqueado label="Área de Vendas" mono value={f.area} />
+        <Bloqueado label="Inspector" value={f.inspector} />
+      </div>
 
       <Seccao numero={1} titulo="Identificação do Cliente" total={4}>
-        {dadosClienteBloqueados}
-        <div className="grid grid-cols-1 gap-x-6 gap-y-5 px-5 pb-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
+          <Bloqueado label="Firma do Cliente" value={f.firma} />
+          <Bloqueado label="Nome do Estabelecimento" value={f.nomeEstabelecimento} />
+          <Bloqueado label="N.º de Contribuinte" mono value={f.contribuinte} />
+          <Bloqueado label="Morada" className="lg:col-span-2" value={f.morada} />
+          <Bloqueado label="Código Postal" mono value={f.codigoPostal} />
+          <Bloqueado label="Localidade" value={f.localidade} />
+          <Bloqueado label="Região" value={f.regiao} />
+          <Bloqueado label="País" value={f.pais} />
+          <Bloqueado label="Pessoa a Contactar" value={f.pessoaContactar} />
+          <Bloqueado label="Dia de Descanso" value={f.diaDescanso} />
+          <Bloqueado label="Telefone" mono value={telefoneCompleto(f.telefone)} />
+          <Bloqueado label="E-mail" value={f.email} />
           <Campo label="N.º do Cartão de Cidadão" mono value={f.contratoNumeroCC} onChange={(v) => set("contratoNumeroCC", v)} />
           <Campo label="Concelho" value={f.contratoConcelho} onChange={(v) => set("contratoConcelho", v)} />
-          <Campo label="Certidão permanente (código)" mono value={f.certidaoPermanente} onChange={(v) => set("certidaoPermanente", v)} />
+        </div>
+        <div className="border-t border-line p-5">
+          <Opcoes label="Tipo de Cliente" opcoes={TIPOS_CLIENTE} value={f.contratoTipoCliente} onChange={(v) => set("contratoTipoCliente", v)} />
         </div>
       </Seccao>
 
-      <Seccao numero={2} titulo="Cliente em Nome Individual" total={4}>
-        <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
-          <Opcoes label="Natural de Portugal?" opcoes={SIM_NAO} value={f.indNaturalidadePt} onChange={(v) => set("indNaturalidadePt", v)} />
-          {f.indNaturalidadePt === "Não" && (
-            <Campo label="Naturalidade" value={f.indNaturalidadeQual} onChange={(v) => set("indNaturalidadeQual", v)} />
-          )}
-          <Opcoes label="Estado civil" opcoes={ESTADOS_CIVIS} value={f.indEstadoCivil} onChange={(v) => set("indEstadoCivil", v)} />
-          {(f.indEstadoCivil === "Casado(a)" || f.indEstadoCivil === "União de facto") && (
-            <Campo label="Nome do cônjuge" value={f.indNomeConjuge} onChange={(v) => set("indNomeConjuge", v)} />
-          )}
-          <Campo label="Morada particular" className="lg:col-span-2" value={f.indMoradaParticular} onChange={(v) => set("indMoradaParticular", v)} />
-          <Campo label="Localidade" value={f.indLocalidade} onChange={(v) => set("indLocalidade", v)} />
-          <Campo label="Concelho" value={f.indConcelho} onChange={(v) => set("indConcelho", v)} />
-          <CampoTelefone label="Telefone" value={f.indTelefone} onChange={(v) => set("indTelefone", v)} />
-          <Campo label="N.º do Cartão de Cidadão" mono value={f.indNumeroCC} onChange={(v) => set("indNumeroCC", v)} />
-        </div>
-      </Seccao>
+      {f.contratoTipoCliente === "Cliente em Nome Individual" && (
+        <Seccao numero={2} titulo="Cliente em Nome Individual" total={4}>
+          <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
+            <SimNao label="Natural de Portugal?" value={f.indNaturalidadePt} onChange={(v) => set("indNaturalidadePt", v)} />
+            {f.indNaturalidadePt === "Não" && (
+              <Campo label="Naturalidade" value={f.indNaturalidadeQual} onChange={(v) => set("indNaturalidadeQual", v)} />
+            )}
+            <Opcoes label="Estado civil" opcoes={ESTADOS_CIVIS} value={f.indEstadoCivil} onChange={(v) => set("indEstadoCivil", v)} />
+            {(f.indEstadoCivil === "Casado(a)" || f.indEstadoCivil === "União de facto") && (
+              <Campo label="Nome do cônjuge" value={f.indNomeConjuge} onChange={(v) => set("indNomeConjuge", v)} />
+            )}
+            <Campo label="Morada particular" className="lg:col-span-2" value={f.indMoradaParticular} onChange={(v) => set("indMoradaParticular", v)} />
+            <Campo label="Localidade" value={f.indLocalidade} onChange={(v) => set("indLocalidade", v)} />
+            <Campo label="Concelho" value={f.indConcelho} onChange={(v) => set("indConcelho", v)} />
+            <CampoTelefone label="Telefone" value={f.indTelefone} onChange={(v) => set("indTelefone", v)} />
+            <Campo label="N.º do Cartão de Cidadão" mono value={f.indNumeroCC} onChange={(v) => set("indNumeroCC", v)} />
+          </div>
+        </Seccao>
+      )}
 
-      <Seccao
-        numero={3}
-        titulo="Sócios / Gerentes"
-        total={4}
-        extra={
-          <button
-            onClick={() => set("socios", [...f.socios, novoSocio()])}
-            className="no-print ml-auto flex items-center gap-1.5 rounded-md border border-line bg-paper px-3 py-2 text-sm font-medium text-ink hover:bg-rail"
-          >
-            <span className="font-mono leading-none">+</span> Adicionar sócio
-          </button>
-        }
-      >
-        <div className="space-y-5 p-5">
-          {f.socios.map((s, i) => (
-            <div key={s.id} className="rounded-lg border border-line p-4">
-              <p className="mb-3 font-mono text-[11px] uppercase tracking-wide text-inksoft">Sócio {i + 1}</p>
-              <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
-                <Campo label="Nome" value={s.nome} onChange={(v) => setSocio(s.id, "nome", v)} />
-                <Campo label="Cargo" value={s.cargo} onChange={(v) => setSocio(s.id, "cargo", v)} />
-                <Opcoes label="Estado civil" opcoes={ESTADOS_CIVIS} value={s.estadoCivil} onChange={(v) => setSocio(s.id, "estadoCivil", v)} />
-                <Campo label="Morada particular" className="lg:col-span-2" value={s.moradaParticular} onChange={(v) => setSocio(s.id, "moradaParticular", v)} />
-                <Campo label="Localidade" value={s.localidade} onChange={(v) => setSocio(s.id, "localidade", v)} />
-                <Campo label="N.º de contribuinte" mono value={s.contribuinte} onChange={(v) => setSocio(s.id, "contribuinte", v)} />
+      {f.contratoTipoCliente === "Cliente Sociedade / Colectividade" && (
+        <Seccao
+          numero={2}
+          titulo="Cliente Sociedade / Colectividade"
+          total={4}
+          extra={
+            <button
+              onClick={() => set("socios", [...f.socios, novoSocio()])}
+              className="no-print ml-auto flex items-center gap-1.5 rounded-md border border-line bg-paper px-3 py-2 text-sm font-medium text-ink hover:bg-rail"
+            >
+              <span className="font-mono leading-none">+</span> Adicionar signatário
+            </button>
+          }
+        >
+          <div className="space-y-5 p-5">
+            <Campo label="Certidão permanente (código)" mono value={f.certidaoPermanente} onChange={(v) => set("certidaoPermanente", v)} />
+            {f.socios.map((s, i) => (
+              <div key={s.id} className="rounded-lg border border-line p-4">
+                <p className="mb-3 font-mono text-[11px] uppercase tracking-wide text-inksoft">Signatário {i + 1}</p>
+                <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+                  <Campo label="Nome" value={s.nome} onChange={(v) => setSocio(s.id, "nome", v)} />
+                  <Campo label="Cargo" value={s.cargo} onChange={(v) => setSocio(s.id, "cargo", v)} />
+                  <Opcoes label="Estado civil" opcoes={ESTADOS_CIVIS} value={s.estadoCivil} onChange={(v) => setSocio(s.id, "estadoCivil", v)} />
+                  <Campo label="Morada particular" className="lg:col-span-2" value={s.moradaParticular} onChange={(v) => setSocio(s.id, "moradaParticular", v)} />
+                  <Campo label="Localidade" value={s.localidade} onChange={(v) => setSocio(s.id, "localidade", v)} />
+                  <Campo label="N.º de contribuinte" mono value={s.contribuinte} onChange={(v) => setSocio(s.id, "contribuinte", v)} />
+                </div>
+                {f.socios.length > 1 && (
+                  <button
+                    onClick={() => set("socios", f.socios.filter((x) => x.id !== s.id))}
+                    className="no-print mt-3 rounded-md border border-line px-3 py-1.5 font-mono text-[11px] text-inksoft hover:bg-rail"
+                  >
+                    Remover signatário
+                  </button>
+                )}
               </div>
-              {f.socios.length > 1 && (
-                <button
-                  onClick={() => set("socios", f.socios.filter((x) => x.id !== s.id))}
-                  className="no-print mt-3 rounded-md border border-line px-3 py-1.5 font-mono text-[11px] text-inksoft hover:bg-rail"
-                >
-                  Remover sócio
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-      </Seccao>
+            ))}
+          </div>
+        </Seccao>
+      )}
 
-      <Seccao numero={4} titulo="Informações sobre o Cliente e o Estabelecimento" total={4}>
+      <Seccao numero={3} titulo="Informações sobre o Cliente e o Estabelecimento" total={4}>
         <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
-          <Opcoes label="Cliente novo?" opcoes={SIM_NAO} value={f.cliNovo} onChange={(v) => set("cliNovo", v)} />
+          <SimNao label="Cliente novo?" value={f.cliNovo} onChange={(v) => set("cliNovo", v)} />
           <Campo label="É nosso cliente em que estabelecimento?" value={f.cliNossoClienteEstab} onChange={(v) => set("cliNossoClienteEstab", v)} />
           <Campo label="Foi nosso cliente em que estabelecimento?" value={f.cliFoiNossoClienteEstab} onChange={(v) => set("cliFoiNossoClienteEstab", v)} />
-          <Campo label="Anos de actividade" mono value={f.cliAnosActividade} onChange={(v) => set("cliAnosActividade", v)} />
-          <Opcoes label="Tem outros estabelecimentos?" opcoes={SIM_NAO} value={f.cliOutrosEstab} onChange={(v) => set("cliOutrosEstab", v)} />
-          {f.cliOutrosEstab === "Sim" && (
-            <Campo label="Quais?" value={f.cliOutrosEstabQuais} onChange={(v) => set("cliOutrosEstabQuais", v)} />
+          <Campo label="Anos de actividade" mono value={f.cliAnosActividade || f.prospAnosActividade} onChange={(v) => set("cliAnosActividade", v)} />
+          <SimNao label="Tem outros estabelecimentos?" value={f.cliOutrosEstab || f.prospOutrosEstab} onChange={(v) => set("cliOutrosEstab", v)} />
+          {(f.cliOutrosEstab || f.prospOutrosEstab) === "Sim" && (
+            <Campo label="Quais?" value={f.cliOutrosEstabQuais || f.prospOutrosEstabQuais} onChange={(v) => set("cliOutrosEstabQuais", v)} />
           )}
-          <Campo label="Marca de café que consome" value={f.cliMarcaConsome} onChange={(v) => set("cliMarcaConsome", v)} />
+          <Campo label="Marca de café que consome" value={f.cliMarcaConsome || f.prospMarcaCafe} onChange={(v) => set("cliMarcaConsome", v)} />
           <Opcoes label="Propriedade" opcoes={PROPRIEDADES} value={f.cliPropriedade} onChange={(v) => set("cliPropriedade", v)} />
           <Campo label="Informações comerciais" value={f.cliInformacoesComerciais} onChange={(v) => set("cliInformacoesComerciais", v)} />
-          <Opcoes label="Estabelecimento novo?" opcoes={SIM_NAO} value={f.estabNovo} onChange={(v) => set("estabNovo", v)} />
-          {f.estabNovo === "Não" && (
-            <Campo label="Aberto há quanto tempo?" value={f.estabAbertoHa} onChange={(v) => set("estabAbertoHa", v)} />
+          <SimNao label="Estabelecimento novo?" value={f.estabNovo || f.prospEstabNovo} onChange={(v) => set("estabNovo", v)} />
+          {(f.estabNovo || f.prospEstabNovo) === "Não" && (
+            <Campo label="Aberto há quanto tempo?" value={f.estabAbertoHa || f.prospAbertoHa} onChange={(v) => set("estabAbertoHa", v)} />
           )}
           <Campo label="Marca de café que consumia" value={f.estabMarcaCafeConsumia} onChange={(v) => set("estabMarcaCafeConsumia", v)} />
-          <Campo label="Horário — das" type="time" value={f.estabHorarioDas} onChange={(v) => set("estabHorarioDas", v)} />
-          <Campo label="Horário — às" type="time" value={f.estabHorarioAs} onChange={(v) => set("estabHorarioAs", v)} />
+          <Campo label="Horário — das" type="time" value={f.estabHorarioDas || f.prospHorarioDas} onChange={(v) => set("estabHorarioDas", v)} />
+          <Campo label="Horário — às" type="time" value={f.estabHorarioAs || f.prospHorarioAs} onChange={(v) => set("estabHorarioAs", v)} />
         </div>
         <div className="grid grid-cols-1 gap-x-6 gap-y-5 px-5 pb-5 sm:grid-cols-2">
           <AreaTexto label="Parecer sobre o estabelecimento" value={f.parecerEstabelecimento} onChange={(v) => set("parecerEstabelecimento", v)} rows={3} />
@@ -551,7 +654,6 @@ function Formulario() {
   );
 
   /* ---------- separador 4 — pedido de investimento ---------- */
-
   function setItens(campo: keyof Ficha, itens: Item[]) {
     set(campo, itens as Ficha[typeof campo]);
   }
@@ -602,7 +704,9 @@ function Formulario() {
               {itens.map((it) => (
                 <tr key={it.id}>
                   <td className="py-1 pr-3"><input value={it.qtd} onChange={(e) => actualizar(it.id, "qtd", e.target.value)} className={`${celaCls} w-14 text-right font-mono`} /></td>
-                  <td className="py-1 pr-3"><input value={it.descricao} onChange={(e) => actualizar(it.id, "descricao", e.target.value)} className={celaCls} /></td>
+                  <td className="py-1 pr-3 min-w-[200px]">
+                    <TextoExpansivel value={it.descricao} onChange={(v) => actualizar(it.id, "descricao", v)} placeholder="Descrição do material" />
+                  </td>
                   <td className="py-1 pr-3"><input value={it.ref} onChange={(e) => actualizar(it.id, "ref", e.target.value)} className={`${celaCls} w-28 font-mono`} /></td>
                   <td className="py-1 pr-3"><input value={it.cor} onChange={(e) => actualizar(it.id, "cor", e.target.value)} className={`${celaCls} w-24`} /></td>
                   <td className="py-1 pr-3"><input value={it.largura} onChange={(e) => actualizar(it.id, "largura", e.target.value)} className={`${celaCls} w-20 font-mono`} /></td>
@@ -619,14 +723,26 @@ function Formulario() {
 
   const aba4 = (
     <>
-      {identificacaoBloqueada}
+      <div className="grid grid-cols-1 gap-x-6 gap-y-5 border-b border-line p-5 sm:grid-cols-2 lg:grid-cols-4">
+        <Campo
+          label="N.º do Pedido de Investimento"
+          mono
+          value={f.piNumero || proximoNumeroPI(f.area, f.id)}
+          onChange={(v) => set("piNumero", v)}
+        />
+        <Bloqueado label="Área de Vendas" mono value={f.area} />
+        <Bloqueado label="Inspector" value={f.inspector} />
+      </div>
 
       <Seccao numero={1} titulo="Identificação" total={4}>
-        {dadosClienteBloqueados}
-        <div className="grid grid-cols-1 gap-x-6 gap-y-5 px-5 pb-5 sm:grid-cols-2 lg:grid-cols-3">
-          <Campo label="N.º do Pedido de Investimento" mono value={f.piNumero} onChange={(v) => set("piNumero", v)} />
-          <Opcoes label="Já consumia café Torrié?" opcoes={SIM_NAO} value={f.piJaConsumiaTorrie} onChange={(v) => set("piJaConsumiaTorrie", v)} />
-          <Campo label="Data" type="date" value={f.piData} onChange={(v) => set("piData", v)} />
+        <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
+          <Bloqueado label="Firma do Cliente" value={f.firma} />
+          <Bloqueado label="Nome do Estabelecimento" value={f.nomeEstabelecimento} />
+          <Bloqueado label="N.º de Contribuinte" mono value={f.contribuinte} />
+          <Bloqueado label="Morada" className="lg:col-span-2" value={f.morada} />
+          <Bloqueado label="Código Postal" mono value={f.codigoPostal} />
+          <Bloqueado label="Localidade" value={f.localidade} />
+          <SimNao label="Já consumia café Torrié?" value={f.piJaConsumiaTorrie} onChange={(v) => set("piJaConsumiaTorrie", v)} />
         </div>
       </Seccao>
 
@@ -640,11 +756,17 @@ function Formulario() {
 
       <Seccao numero={3} titulo="Condições Acordadas" total={4}>
         <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
-          <Campo label="Contrato (anos)" mono value={f.piContrato} onChange={(v) => set("piContrato", v)} />
+          <SimNao label="Contrato?" value={f.piContratoSim} onChange={(v) => set("piContratoSim", v)} />
+          {f.piContratoSim === "Sim" && (
+            <>
+              <Campo label="Contrato (anos)" mono value={f.piContrato} onChange={(v) => set("piContrato", v)} />
+              <Campo label="Total de quilos para contrato" mono value={f.piTotalQuilos} onChange={(v) => set("piTotalQuilos", v)} />
+            </>
+          )}
           <Campo label="Média mensal (kg)" mono value={f.piMediaMensal} onChange={(v) => set("piMediaMensal", v)} />
           <Campo label="Lote" value={f.piLote} onChange={(v) => set("piLote", v)} />
           <Campo label="Bónus" value={f.piBonus} onChange={(v) => set("piBonus", v)} />
-          <Campo label="Dizeres a aplicar" className="lg:col-span-2" value={f.piDizeres} onChange={(v) => set("piDizeres", v)} />
+          <Campo label="Dizeres a aplicar na publicidade" className="lg:col-span-2" value={f.piDizeres} onChange={(v) => set("piDizeres", v)} />
         </div>
         <div className="px-5 pb-5">
           <AreaTexto label="Observações" value={f.piObservacoes} onChange={(v) => set("piObservacoes", v)} rows={3} />
@@ -652,17 +774,29 @@ function Formulario() {
       </Seccao>
 
       <Seccao numero={4} titulo="Assinaturas e Controlo Interno" total={4}>
-        <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
-          <Campo label="Assinatura do cliente" value={f.piAssinaturaCliente} onChange={(v) => set("piAssinaturaCliente", v)} />
-          <Campo label="Assinatura do vendedor" value={f.piAssinaturaVendedor} onChange={(v) => set("piAssinaturaVendedor", v)} />
-          <Campo label="Assinatura do inspector" value={f.piAssinaturaInspector} onChange={(v) => set("piAssinaturaInspector", v)} />
-          <Campo label="Aprovação JMV" value={f.piAprovacaoJMV} onChange={(v) => set("piAprovacaoJMV", v)} />
-          <Campo label="Data de aprovação" type="date" value={f.piDataAprovacao} onChange={(v) => set("piDataAprovacao", v)} />
-          <Campo label="Data de recepção" type="date" value={f.piDataRecepcao} onChange={(v) => set("piDataRecepcao", v)} />
-          <Campo label="N.º de requisição" mono value={f.piNumRequisicao} onChange={(v) => set("piNumRequisicao", v)} />
-          <Campo label="Data de entrega ao SAC" type="date" value={f.piDataEntregaSAC} onChange={(v) => set("piDataEntregaSAC", v)} />
-          <Campo label="N.º do pedido de compra" mono value={f.piNumPedidoCompra} onChange={(v) => set("piNumPedidoCompra", v)} />
-          <Campo label="Custo (€)" mono value={f.piCusto} onChange={(v) => set("piCusto", v)} />
+        <div className="space-y-5 p-5">
+          <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+            <Campo label="Data" type="date" value={f.piData} onChange={(v) => set("piData", v)} />
+          </div>
+          <Assinatura label="Assinatura do Cliente" value={f.piAssinaturaClienteImg} onChange={(v) => set("piAssinaturaClienteImg", v)} />
+          <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+            <Campo label="Assinatura do vendedor" value={f.piAssinaturaVendedor} onChange={(v) => set("piAssinaturaVendedor", v)} />
+            <Campo label="Assinatura do inspector" value={f.piAssinaturaInspector} onChange={(v) => set("piAssinaturaInspector", v)} />
+          </div>
+          <div className="border-t border-line pt-5">
+            <p className="mb-4 font-mono text-[11px] uppercase tracking-wide text-inksoft">
+              Controlo Interno — preencher / assinar à mão no documento impresso
+            </p>
+            <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+              <Campo label="Data de recepção" type="date" value={f.piDataRecepcao} onChange={(v) => set("piDataRecepcao", v)} />
+              <Campo label="Aprovação JMV" value={f.piAprovacaoJMV} onChange={(v) => set("piAprovacaoJMV", v)} />
+              <Campo label="Data de aprovação" type="date" value={f.piDataAprovacao} onChange={(v) => set("piDataAprovacao", v)} />
+              <Campo label="N.º de requisição" mono value={f.piNumRequisicao} onChange={(v) => set("piNumRequisicao", v)} />
+              <Campo label="Data de entrega ao SAC" type="date" value={f.piDataEntregaSAC} onChange={(v) => set("piDataEntregaSAC", v)} />
+              <Campo label="N.º do pedido de compra" mono value={f.piNumPedidoCompra} onChange={(v) => set("piNumPedidoCompra", v)} />
+              <Campo label="Custo (€)" mono value={f.piCusto} onChange={(v) => set("piCusto", v)} />
+            </div>
+          </div>
         </div>
       </Seccao>
     </>
@@ -695,9 +829,7 @@ function Formulario() {
                 key={t}
                 onClick={() => setAba(i)}
                 className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                  aba === i
-                    ? "bg-ink text-paper"
-                    : "border border-line bg-paper text-inksoft hover:bg-rail"
+                  aba === i ? "bg-ink text-paper" : "border border-line bg-paper text-inksoft hover:bg-rail"
                 }`}
               >
                 {t}
