@@ -13,6 +13,7 @@ export type Linha = {
 export type Item = {
   id: string;
   qtd: string;
+  cod: string;
   descricao: string;
   ref: string;
   cor: string;
@@ -495,6 +496,7 @@ export function novoItem(): Item {
   return {
     id: crypto.randomUUID(),
     qtd: "",
+    cod: "",
     descricao: "",
     ref: "",
     cor: "",

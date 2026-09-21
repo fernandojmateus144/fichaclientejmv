@@ -70,6 +70,17 @@ const SEPARADORES = [
   "4 · Pedido de Investimento",
 ];
 
+// Per-tab required fields — validation only checks the current tab and prior tabs
+const OBRIGATORIOS_ABA1: (keyof Ficha)[] = [
+  "area", "inspector", "firma", "nomeEstabelecimento", "contribuinte",
+  "morada", "codigoPostal", "localidade", "regiao", "pais",
+  "pessoaContactar", "diaDescanso", "telefone", "email",
+];
+
+const OBRIGATORIOS_ABA2: (keyof Ficha)[] = [
+  "numeroCliente", "canal", "sector", "grupo", "condicoesPagamento",
+];
+
 function Formulario() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
@@ -92,68 +103,54 @@ function Formulario() {
   };
 
   const setLinha = (linhaId: string, k: keyof Linha, v: string) => {
-    set(
-      "linhas",
-      f.linhas.map((l) => (l.id === linhaId ? { ...l, [k]: v } : l)),
-    );
+    set("linhas", f.linhas.map((l) => (l.id === linhaId ? { ...l, [k]: v } : l)));
   };
 
   const setSocio = (socioId: string, k: keyof Socio, v: string) => {
-    set(
-      "socios",
-      f.socios.map((s) => (s.id === socioId ? { ...s, [k]: v } : s)),
-    );
+    set("socios", f.socios.map((s) => (s.id === socioId ? { ...s, [k]: v } : s)));
   };
 
   const eCafes = f.sector === "Cafés";
   const bloqueadoSe = (valor: string) => valor.trim().length > 0;
 
-  function emFalta(x: Ficha) {
-    const base: (keyof Ficha)[] = [
-      "area",
-      "inspector",
-      "firma",
-      "nomeEstabelecimento",
-      "contribuinte",
-      "morada",
-      "codigoPostal",
-      "localidade",
-      "regiao",
-      "pais",
-      "pessoaContactar",
-      "diaDescanso",
-      "telefone",
-      "email",
-      "canal",
-      "sector",
-      "grupo",
-      "condicoesPagamento",
-    ];
-    const faltam = base.filter((k) => !String(x[k] ?? "").trim());
-    if (x.sector === "Outro" && !x.sectorOutro.trim()) faltam.push("sectorOutro");
-    if (x.grupo === "Outro" && !x.grupoLista.trim()) faltam.push("grupoLista");
-    if (x.grupo === "Outro" && x.grupoLista === "Outros" && !x.grupoQual.trim())
-      faltam.push("grupoQual");
-    return faltam;
+  // Per-tab validation: check required fields for tabs 0..aba
+  function emFaltaAte(x: Ficha, ateAba: number): (keyof Ficha)[] {
+    const campos: (keyof Ficha)[] = [];
+    for (let i = 0; i <= ateAba; i++) {
+      if (i === 0) campos.push(...OBRIGATORIOS_ABA1);
+      if (i === 1) campos.push(...OBRIGATORIOS_ABA2);
+    }
+    const faltam = campos.filter((k) => !String(x[k] ?? "").trim());
+    if (ateAba >= 1) {
+      if (x.sector === "Outro" && !x.sectorOutro.trim()) faltam.push("sectorOutro");
+      if (x.grupo === "Outro" && !x.grupoLista.trim()) faltam.push("grupoLista");
+      if (x.grupo === "Outro" && x.grupoLista === "Outros" && !x.grupoQual.trim()) faltam.push("grupoQual");
+    }
+    return [...new Set(faltam)];
   }
 
-  const faltam = emFalta(f);
-  const faltamAba1 = faltam.filter(
-    (k) =>
-      k !== "canal" &&
-      k !== "sector" &&
-      k !== "grupo" &&
-      k !== "condicoesPagamento" &&
-      k !== "sectorOutro" &&
-      k !== "grupoLista" &&
-      k !== "grupoQual",
-  );
+  function faltamNaAba(x: Ficha, abaNum: number): (keyof Ficha)[] {
+    if (abaNum === 0) {
+      const faltam = OBRIGATORIOS_ABA1.filter((k) => !String(x[k] ?? "").trim());
+      return faltam;
+    }
+    if (abaNum === 1) {
+      const faltam = OBRIGATORIOS_ABA2.filter((k) => !String(x[k] ?? "").trim());
+      if (x.sector === "Outro" && !x.sectorOutro.trim()) faltam.push("sectorOutro");
+      if (x.grupo === "Outro" && !x.grupoLista.trim()) faltam.push("grupoLista");
+      if (x.grupo === "Outro" && x.grupoLista === "Outros" && !x.grupoQual.trim()) faltam.push("grupoQual");
+      return faltam;
+    }
+    return [];
+  }
+
+  const faltam = emFaltaAte(f, aba);
 
   function guardar() {
     if (!ficha) return;
-    if (emFalta(ficha).length > 0) {
+    const faltamTotal = emFaltaAte(ficha, aba);
+    if (faltamTotal.length > 0) {
       setErro(true);
-      setAba(faltamAba1.length > 0 ? 0 : 1);
       return;
     }
     setErro(false);
@@ -163,16 +160,15 @@ function Formulario() {
     if (id === "nova") navigate({ to: "/ficha/$id", params: { id: gravada.id }, replace: true });
   }
 
+  function imprimirAba(abaNum: number) {
+    setAba(abaNum);
+    setTimeout(() => window.print(), 100);
+  }
+
   /* ---------- helpers: campo bloqueia se já tiver valor ---------- */
   function CampoOuBloqueado(props: {
-    label: string;
-    valor: string;
-    onChange: (v: string) => void;
-    mono?: boolean;
-    type?: string;
-    className?: string;
-    obrigatorio?: boolean;
-    erro?: boolean;
+    label: string; valor: string; onChange: (v: string) => void;
+    mono?: boolean; type?: string; className?: string; obrigatorio?: boolean; erro?: boolean;
   }) {
     if (bloqueadoSe(props.valor))
       return <Bloqueado label={props.label} value={props.valor} className={props.className} mono={props.mono} />;
@@ -180,12 +176,8 @@ function Formulario() {
   }
 
   function CampoTelefoneOuBloqueado(props: {
-    label: string;
-    valor: string;
-    onChange: (v: string) => void;
-    className?: string;
-    obrigatorio?: boolean;
-    erro?: boolean;
+    label: string; valor: string; onChange: (v: string) => void;
+    className?: string; obrigatorio?: boolean; erro?: boolean;
   }) {
     if (bloqueadoSe(props.valor))
       return <Bloqueado label={props.label} value={telefoneCompleto(props.valor)} className={props.className} mono />;
@@ -193,12 +185,8 @@ function Formulario() {
   }
 
   function CampoEmailOuBloqueado(props: {
-    label: string;
-    valor: string;
-    onChange: (v: string) => void;
-    className?: string;
-    obrigatorio?: boolean;
-    erro?: boolean;
+    label: string; valor: string; onChange: (v: string) => void;
+    className?: string; obrigatorio?: boolean; erro?: boolean;
   }) {
     if (bloqueadoSe(props.valor))
       return <Bloqueado label={props.label} value={props.valor} className={props.className} />;
@@ -206,13 +194,8 @@ function Formulario() {
   }
 
   function OpcoesOuBloqueado(props: {
-    label: string;
-    opcoes: string[];
-    valor: string;
-    onChange: (v: string) => void;
-    className?: string;
-    obrigatorio?: boolean;
-    erro?: boolean;
+    label: string; opcoes: string[]; valor: string; onChange: (v: string) => void;
+    className?: string; obrigatorio?: boolean; erro?: boolean;
   }) {
     if (bloqueadoSe(props.valor))
       return <Bloqueado label={props.label} value={props.valor} className={props.className} />;
@@ -223,21 +206,8 @@ function Formulario() {
   const aba1 = (
     <>
       <div className="grid grid-cols-1 gap-x-6 gap-y-5 border-b border-line p-5 sm:grid-cols-2 lg:grid-cols-4">
-        <Campo
-          label="Área de Vendas"
-          mono
-          obrigatorio
-          erro={erro}
-          value={f.area}
-          onChange={(v) => set("area", v.replace(/\D/g, "").slice(0, 3))}
-        />
-        <Campo
-          label="Inspector"
-          obrigatorio
-          erro={erro}
-          value={f.inspector}
-          onChange={(v) => set("inspector", v)}
-        />
+        <Campo label="Área de Vendas" mono obrigatorio erro={erro} value={f.area} onChange={(v) => set("area", v.replace(/\D/g, "").slice(0, 3))} />
+        <Campo label="Inspector" obrigatorio erro={erro} value={f.inspector} onChange={(v) => set("inspector", v)} />
       </div>
 
       <Seccao numero={1} titulo="Dados do Cliente" total={4}>
@@ -263,47 +233,33 @@ function Formulario() {
           <Campo label="Responsável pela Negociação" value={f.prospRespNegociacao} onChange={(v) => set("prospRespNegociacao", v)} />
           <Campo label="Anos de Actividade" mono value={f.prospAnosActividade} onChange={(v) => set("prospAnosActividade", v)} />
           <SimNao label="Já foi nosso cliente?" value={f.prospJaFoiCliente} onChange={(v) => set("prospJaFoiCliente", v)} />
-          {f.prospJaFoiCliente === "Sim" && (
-            <Campo label="Em que estabelecimento?" value={f.prospJaFoiClienteOnde} onChange={(v) => set("prospJaFoiClienteOnde", v)} />
-          )}
+          {f.prospJaFoiCliente === "Sim" && (<Campo label="Em que estabelecimento?" value={f.prospJaFoiClienteOnde} onChange={(v) => set("prospJaFoiClienteOnde", v)} />)}
           <SimNao label="Conhece a nossa empresa?" value={f.prospConheceEmpresa} onChange={(v) => set("prospConheceEmpresa", v)} />
-          {f.prospConheceEmpresa === "Sim" && (
-            <Campo label="Como?" value={f.prospConheceComo} onChange={(v) => set("prospConheceComo", v)} />
-          )}
+          {f.prospConheceEmpresa === "Sim" && (<Campo label="Como?" value={f.prospConheceComo} onChange={(v) => set("prospConheceComo", v)} />)}
           <Campo label="Conhece alguém na empresa?" value={f.prospConheceAlguem} onChange={(v) => set("prospConheceAlguem", v)} />
           <SimNao label="Tem outros estabelecimentos?" value={f.prospOutrosEstab} onChange={(v) => set("prospOutrosEstab", v)} />
-          {f.prospOutrosEstab === "Sim" && (
-            <Campo label="Quais?" value={f.prospOutrosEstabQuais} onChange={(v) => set("prospOutrosEstabQuais", v)} />
-          )}
+          {f.prospOutrosEstab === "Sim" && (<Campo label="Quais?" value={f.prospOutrosEstabQuais} onChange={(v) => set("prospOutrosEstabQuais", v)} />)}
           <SimNao label="Fez degustação?" value={f.prospDegustacao} onChange={(v) => set("prospDegustacao", v)} />
-          {f.prospDegustacao === "Sim" && (
-            <Campo label="Opinião da degustação" value={f.prospDegustacaoOpiniao} onChange={(v) => set("prospDegustacaoOpiniao", v)} />
-          )}
+          {f.prospDegustacao === "Sim" && (<Campo label="Opinião da degustação" value={f.prospDegustacaoOpiniao} onChange={(v) => set("prospDegustacaoOpiniao", v)} />)}
         </div>
       </Seccao>
 
       <Seccao numero={3} titulo="Estabelecimento e Vínculo" total={4}>
         <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
           <SimNao label="Estabelecimento novo?" value={f.prospEstabNovo} onChange={(v) => set("prospEstabNovo", v)} />
-          {f.prospEstabNovo === "Não" && (
-            <Campo label="Aberto há quanto tempo?" value={f.prospAbertoHa} onChange={(v) => set("prospAbertoHa", v)} />
-          )}
+          {f.prospEstabNovo === "Não" && (<Campo label="Aberto há quanto tempo?" value={f.prospAbertoHa} onChange={(v) => set("prospAbertoHa", v)} />)}
           <SimNao label="Houve trespasse?" value={f.prospTrespasse} onChange={(v) => set("prospTrespasse", v)} />
           <Opcoes label="Vínculo ao estabelecimento" opcoes={VINCULOS} value={f.prospVinculo} onChange={(v) => set("prospVinculo", v)} />
           <SimNao label="Tem contrato de arrendamento?" value={f.prospArrendamento} onChange={(v) => set("prospArrendamento", v)} />
-          {f.prospArrendamento === "Sim" && (
-            <>
-              <Campo label="Arrendamento até" type="date" value={f.prospArrendamentoAte} onChange={(v) => set("prospArrendamentoAte", v)} />
-              <Campo label="Renda mensal (€)" mono value={f.prospRenda} onChange={(v) => set("prospRenda", v)} />
-            </>
-          )}
+          {f.prospArrendamento === "Sim" && (<>
+            <Campo label="Arrendamento até" type="date" value={f.prospArrendamentoAte} onChange={(v) => set("prospArrendamentoAte", v)} />
+            <Campo label="Renda mensal (€)" mono value={f.prospRenda} onChange={(v) => set("prospRenda", v)} />
+          </>)}
           <Campo label="Horário — das" type="time" value={f.prospHorarioDas} onChange={(v) => set("prospHorarioDas", v)} />
           <Campo label="Horário — às" type="time" value={f.prospHorarioAs} onChange={(v) => set("prospHorarioAs", v)} />
           <Campo label="N.º de estabelecimentos na área" mono value={f.prospNumEstabArea} onChange={(v) => set("prospNumEstabArea", v)} />
           <Opcoes label="Tipo de estabelecimento" opcoes={TIPOS_ESTAB} value={f.prospTipoEstab} onChange={(v) => set("prospTipoEstab", v)} />
-          {f.prospTipoEstab === "Outro" && (
-            <Campo label="Qual?" value={f.prospTipoEstabOutro} onChange={(v) => set("prospTipoEstabOutro", v)} />
-          )}
+          {f.prospTipoEstab === "Outro" && (<Campo label="Qual?" value={f.prospTipoEstabOutro} onChange={(v) => set("prospTipoEstabOutro", v)} />)}
         </div>
       </Seccao>
 
@@ -316,12 +272,10 @@ function Formulario() {
           <Campo label="Desconto (%)" mono value={f.prospDesconto} onChange={(v) => set("prospDesconto", v)} />
           <Campo label="Bónus" value={f.prospBonus} onChange={(v) => set("prospBonus", v)} />
           <SimNao label="Tem contrato com o fornecedor actual?" value={f.prospTemContrato} onChange={(v) => set("prospTemContrato", v)} />
-          {f.prospTemContrato === "Sim" && (
-            <>
-              <Campo label="Tipo de contrato" value={f.prospContratoTipo} onChange={(v) => set("prospContratoTipo", v)} />
-              <Campo label="Fim do contrato" type="date" value={f.prospFimContrato} onChange={(v) => set("prospFimContrato", v)} />
-            </>
-          )}
+          {f.prospTemContrato === "Sim" && (<>
+            <Campo label="Tipo de contrato" value={f.prospContratoTipo} onChange={(v) => set("prospContratoTipo", v)} />
+            <Campo label="Fim do contrato" type="date" value={f.prospFimContrato} onChange={(v) => set("prospFimContrato", v)} />
+          </>)}
           <Campo label="Máquinas pedidas" value={f.prospMaquinas} onChange={(v) => set("prospMaquinas", v)} />
           <Campo label="Mobiliário pedido" value={f.prospMobiliario} onChange={(v) => set("prospMobiliario", v)} />
           <Campo label="Verba (€)" mono value={f.prospVerba} onChange={(v) => set("prospVerba", v)} />
@@ -340,43 +294,21 @@ function Formulario() {
         </div>
       </Seccao>
 
-      {/* Datas de visitas posteriores — additive list */}
       <div className="border-b border-line p-5">
         <div className="mb-3 flex flex-wrap items-center gap-3">
           <h3 className="text-sm font-semibold">Datas de Visitas Posteriores</h3>
-          <button
-            type="button"
-            onClick={() => set("prospVisitasDatas", [...f.prospVisitasDatas, ""])}
-            className="no-print ml-auto flex items-center gap-1.5 rounded-md border border-line bg-paper px-3 py-2 text-sm font-medium text-ink hover:bg-rail"
-          >
+          <button type="button" onClick={() => set("prospVisitasDatas", [...f.prospVisitasDatas, ""])} className="no-print ml-auto flex items-center gap-1.5 rounded-md border border-line bg-paper px-3 py-2 text-sm font-medium text-ink hover:bg-rail">
             <span className="font-mono leading-none">+</span> Adicionar data de visita
           </button>
         </div>
-        {f.prospVisitasDatas.length === 0 && (
-          <p className="font-mono text-[11px] text-inksoft">Nenhuma data de visita posterior registada.</p>
-        )}
+        {f.prospVisitasDatas.length === 0 && (<p className="font-mono text-[11px] text-inksoft">Nenhuma data de visita posterior registada.</p>)}
         <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
           {f.prospVisitasDatas.map((d, i) => (
             <div key={i} className="flex items-end gap-2">
               <div className="flex-1">
-                <Campo
-                  label={`Visita ${i + 1}`}
-                  type="date"
-                  value={d}
-                  onChange={(v) =>
-                    set("prospVisitasDatas", f.prospVisitasDatas.map((x, j) => (j === i ? v : x)))
-                  }
-                />
+                <Campo label={`Visita ${i + 1}`} type="date" value={d} onChange={(v) => set("prospVisitasDatas", f.prospVisitasDatas.map((x, j) => (j === i ? v : x)))} />
               </div>
-              <button
-                type="button"
-                onClick={() =>
-                  set("prospVisitasDatas", f.prospVisitasDatas.filter((_, j) => j !== i))
-                }
-                className="no-print mb-1 rounded-md border border-line px-2.5 py-2 font-mono text-[11px] text-warn hover:bg-rail"
-              >
-                ✕
-              </button>
+              <button type="button" onClick={() => set("prospVisitasDatas", f.prospVisitasDatas.filter((_, j) => j !== i))} className="no-print mb-1 rounded-md border border-line px-2.5 py-2 font-mono text-[11px] text-warn hover:bg-rail">✕</button>
             </div>
           ))}
         </div>
@@ -416,20 +348,14 @@ function Formulario() {
           <Opcoes label="Canal de Distribuição" opcoes={CANAIS} obrigatorio erro={erro} value={f.canal} onChange={(v) => set("canal", v)} />
           <div className="space-y-4">
             <Opcoes label="Sector de Actividade" opcoes={SECTORES} obrigatorio erro={erro} value={f.sector} onChange={(v) => set("sector", v)} />
-            {f.sector === "Outro" && (
-              <Campo label="Qual?" obrigatorio erro={erro} value={f.sectorOutro} onChange={(v) => set("sectorOutro", v)} />
-            )}
+            {f.sector === "Outro" && (<Campo label="Qual?" obrigatorio erro={erro} value={f.sectorOutro} onChange={(v) => set("sectorOutro", v)} />)}
           </div>
           <div className="space-y-4">
             <Opcoes label="Grupo de Clientes" opcoes={GRUPOS} obrigatorio erro={erro} value={f.grupo} onChange={(v) => set("grupo", v)} />
-            {f.grupo === "Outro" && (
-              <>
-                <Opcoes label="Qual grupo?" opcoes={GRUPOS_CLIENTES} obrigatorio erro={erro} value={f.grupoLista} onChange={(v) => set("grupoLista", v)} />
-                {f.grupoLista === "Outros" && (
-                  <Campo label="Indique o grupo" obrigatorio erro={erro} value={f.grupoQual} onChange={(v) => set("grupoQual", v)} />
-                )}
-              </>
-            )}
+            {f.grupo === "Outro" && (<>
+              <Opcoes label="Qual grupo?" opcoes={GRUPOS_CLIENTES} obrigatorio erro={erro} value={f.grupoLista} onChange={(v) => set("grupoLista", v)} />
+              {f.grupoLista === "Outros" && (<Campo label="Indique o grupo" obrigatorio erro={erro} value={f.grupoQual} onChange={(v) => set("grupoQual", v)} />)}
+            </>)}
           </div>
         </div>
       </Seccao>
@@ -449,9 +375,7 @@ function Formulario() {
               <Campo label="Moinho — Marca - Modelo" value={f.moinho} onChange={(v) => set("moinho", v)} />
               <Campo label="Máquina de Lavar — Marca - Modelo" value={f.maquinaLavar} onChange={(v) => set("maquinaLavar", v)} />
             </div>
-            <p className="font-mono text-[11px] text-inksoft">
-              Preencher apenas se o equipamento a prestar assistência não for propriedade da JMV.
-            </p>
+            <p className="font-mono text-[11px] text-inksoft">Preencher apenas se o equipamento a prestar assistência não for propriedade da JMV.</p>
             <Opcoes label="Sistema de Débito" opcoes={SISTEMAS_DEBITO} value={f.sistemaDebito} onChange={(v) => set("sistemaDebito", v)} />
           </div>
         </Seccao>
@@ -471,31 +395,17 @@ function Formulario() {
         <div className="space-y-4 p-5">
           <AreaTexto value={f.observacoes} onChange={(v) => set("observacoes", v)} rows={5} />
           <label className="flex items-start gap-3 rounded-md border border-line bg-panel px-3 py-3 text-sm">
-            <input
-              type="checkbox"
-              checked={f.declaracao}
-              onChange={(e) => set("declaracao", e.target.checked)}
-              className="mt-0.5 size-4 accent-[var(--primary)]"
-            />
-            Declaro que me foi exibida a declaração de início de actividade fiscal / cartão de
-            contribuinte do cliente, que verifiquei estar em conformidade.
+            <input type="checkbox" checked={f.declaracao} onChange={(e) => set("declaracao", e.target.checked)} className="mt-0.5 size-4 accent-[var(--primary)]" />
+            Declaro que me foi exibida a declaração de início de actividade fiscal / cartão de contribuinte do cliente, que verifiquei estar em conformidade.
           </label>
         </div>
       </Seccao>
 
-      <Seccao
-        numero={7}
-        titulo="Condições de Fornecimento"
-        total={7}
-        extra={
-          <button
-            onClick={() => set("linhas", [...f.linhas, novaLinha()])}
-            className="no-print ml-auto flex items-center gap-1.5 rounded-md border border-line bg-paper px-3 py-2 text-sm font-medium text-ink hover:bg-rail"
-          >
-            <span className="font-mono leading-none">+</span> Adicionar linha
-          </button>
-        }
-      >
+      <Seccao numero={7} titulo="Condições de Fornecimento" total={7} extra={
+        <button onClick={() => set("linhas", [...f.linhas, novaLinha()])} className="no-print ml-auto flex items-center gap-1.5 rounded-md border border-line bg-paper px-3 py-2 text-sm font-medium text-ink hover:bg-rail">
+          <span className="font-mono leading-none">+</span> Adicionar linha
+        </button>
+      }>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[900px] border-collapse text-sm">
             <thead>
@@ -526,9 +436,7 @@ function Formulario() {
             </tbody>
           </table>
         </div>
-        <p className="px-5 pb-4 font-mono text-[11px] text-inksoft">
-          Preencher o preço apenas caso seja diferente do preço de tabela geral.
-        </p>
+        <p className="px-5 pb-4 font-mono text-[11px] text-inksoft">Preencher o preço apenas caso seja diferente do preço de tabela geral.</p>
       </Seccao>
     </>
   );
@@ -543,18 +451,18 @@ function Formulario() {
 
       <Seccao numero={1} titulo="Identificação do Cliente" total={4}>
         <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
-          <Bloqueado label="Firma do Cliente" value={f.firma} />
-          <Bloqueado label="Nome do Estabelecimento" value={f.nomeEstabelecimento} />
-          <Bloqueado label="N.º de Contribuinte" mono value={f.contribuinte} />
-          <Bloqueado label="Morada" className="lg:col-span-2" value={f.morada} />
-          <Bloqueado label="Código Postal" mono value={f.codigoPostal} />
-          <Bloqueado label="Localidade" value={f.localidade} />
-          <Bloqueado label="Região" value={f.regiao} />
-          <Bloqueado label="País" value={f.pais} />
-          <Bloqueado label="Pessoa a Contactar" value={f.pessoaContactar} />
-          <Bloqueado label="Dia de Descanso" value={f.diaDescanso} />
-          <Bloqueado label="Telefone" mono value={telefoneCompleto(f.telefone)} />
-          <Bloqueado label="E-mail" value={f.email} />
+          <CampoOuBloqueado label="Firma do Cliente" valor={f.firma} onChange={(v) => set("firma", v)} />
+          <CampoOuBloqueado label="Nome do Estabelecimento" valor={f.nomeEstabelecimento} onChange={(v) => set("nomeEstabelecimento", v)} />
+          <CampoOuBloqueado label="N.º de Contribuinte" valor={f.contribuinte} onChange={(v) => set("contribuinte", v)} mono />
+          <CampoOuBloqueado label="Morada" valor={f.morada} onChange={(v) => set("morada", v)} className="lg:col-span-2" />
+          <CampoOuBloqueado label="Código Postal" valor={f.codigoPostal} onChange={(v) => set("codigoPostal", formatarCodigoPostal(v))} mono />
+          <CampoOuBloqueado label="Localidade" valor={f.localidade} onChange={(v) => set("localidade", v)} />
+          <OpcoesOuBloqueado label="Região" opcoes={REGIOES} valor={f.regiao} onChange={(v) => set("regiao", v)} />
+          <CampoOuBloqueado label="País" valor={f.pais} onChange={(v) => set("pais", v)} />
+          <CampoOuBloqueado label="Pessoa a Contactar" valor={f.pessoaContactar} onChange={(v) => set("pessoaContactar", v)} />
+          <CampoOuBloqueado label="Dia de Descanso" valor={f.diaDescanso} onChange={(v) => set("diaDescanso", v)} />
+          <CampoTelefoneOuBloqueado label="Telefone" valor={f.telefone} onChange={(v) => set("telefone", v)} />
+          <CampoEmailOuBloqueado label="E-mail" valor={f.email} onChange={(v) => set("email", v)} />
           <Campo label="N.º do Cartão de Cidadão" mono value={f.contratoNumeroCC} onChange={(v) => set("contratoNumeroCC", v)} />
           <Campo label="Concelho" value={f.contratoConcelho} onChange={(v) => set("contratoConcelho", v)} />
         </div>
@@ -567,13 +475,9 @@ function Formulario() {
         <Seccao numero={2} titulo="Cliente em Nome Individual" total={4}>
           <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
             <SimNao label="Natural de Portugal?" value={f.indNaturalidadePt} onChange={(v) => set("indNaturalidadePt", v)} />
-            {f.indNaturalidadePt === "Não" && (
-              <Campo label="Naturalidade" value={f.indNaturalidadeQual} onChange={(v) => set("indNaturalidadeQual", v)} />
-            )}
+            {f.indNaturalidadePt === "Não" && (<Campo label="Naturalidade" value={f.indNaturalidadeQual} onChange={(v) => set("indNaturalidadeQual", v)} />)}
             <Opcoes label="Estado civil" opcoes={ESTADOS_CIVIS} value={f.indEstadoCivil} onChange={(v) => set("indEstadoCivil", v)} />
-            {(f.indEstadoCivil === "Casado(a)" || f.indEstadoCivil === "União de facto") && (
-              <Campo label="Nome do cônjuge" value={f.indNomeConjuge} onChange={(v) => set("indNomeConjuge", v)} />
-            )}
+            {(f.indEstadoCivil === "Casado(a)" || f.indEstadoCivil === "União de facto") && (<Campo label="Nome do cônjuge" value={f.indNomeConjuge} onChange={(v) => set("indNomeConjuge", v)} />)}
             <Campo label="Morada particular" className="lg:col-span-2" value={f.indMoradaParticular} onChange={(v) => set("indMoradaParticular", v)} />
             <Campo label="Localidade" value={f.indLocalidade} onChange={(v) => set("indLocalidade", v)} />
             <Campo label="Concelho" value={f.indConcelho} onChange={(v) => set("indConcelho", v)} />
@@ -584,19 +488,11 @@ function Formulario() {
       )}
 
       {f.contratoTipoCliente === "Cliente Sociedade / Colectividade" && (
-        <Seccao
-          numero={2}
-          titulo="Cliente Sociedade / Colectividade"
-          total={4}
-          extra={
-            <button
-              onClick={() => set("socios", [...f.socios, novoSocio()])}
-              className="no-print ml-auto flex items-center gap-1.5 rounded-md border border-line bg-paper px-3 py-2 text-sm font-medium text-ink hover:bg-rail"
-            >
-              <span className="font-mono leading-none">+</span> Adicionar signatário
-            </button>
-          }
-        >
+        <Seccao numero={2} titulo="Cliente Sociedade / Colectividade" total={4} extra={
+          <button onClick={() => set("socios", [...f.socios, novoSocio()])} className="no-print ml-auto flex items-center gap-1.5 rounded-md border border-line bg-paper px-3 py-2 text-sm font-medium text-ink hover:bg-rail">
+            <span className="font-mono leading-none">+</span> Adicionar signatário
+          </button>
+        }>
           <div className="space-y-5 p-5">
             <Campo label="Certidão permanente (código)" mono value={f.certidaoPermanente} onChange={(v) => set("certidaoPermanente", v)} />
             {f.socios.map((s, i) => (
@@ -610,14 +506,7 @@ function Formulario() {
                   <Campo label="Localidade" value={s.localidade} onChange={(v) => setSocio(s.id, "localidade", v)} />
                   <Campo label="N.º de contribuinte" mono value={s.contribuinte} onChange={(v) => setSocio(s.id, "contribuinte", v)} />
                 </div>
-                {f.socios.length > 1 && (
-                  <button
-                    onClick={() => set("socios", f.socios.filter((x) => x.id !== s.id))}
-                    className="no-print mt-3 rounded-md border border-line px-3 py-1.5 font-mono text-[11px] text-inksoft hover:bg-rail"
-                  >
-                    Remover signatário
-                  </button>
-                )}
+                {f.socios.length > 1 && (<button onClick={() => set("socios", f.socios.filter((x) => x.id !== s.id))} className="no-print mt-3 rounded-md border border-line px-3 py-1.5 font-mono text-[11px] text-inksoft hover:bg-rail">Remover signatário</button>)}
               </div>
             ))}
           </div>
@@ -631,16 +520,12 @@ function Formulario() {
           <Campo label="Foi nosso cliente em que estabelecimento?" value={f.cliFoiNossoClienteEstab} onChange={(v) => set("cliFoiNossoClienteEstab", v)} />
           <Campo label="Anos de actividade" mono value={f.cliAnosActividade || f.prospAnosActividade} onChange={(v) => set("cliAnosActividade", v)} />
           <SimNao label="Tem outros estabelecimentos?" value={f.cliOutrosEstab || f.prospOutrosEstab} onChange={(v) => set("cliOutrosEstab", v)} />
-          {(f.cliOutrosEstab || f.prospOutrosEstab) === "Sim" && (
-            <Campo label="Quais?" value={f.cliOutrosEstabQuais || f.prospOutrosEstabQuais} onChange={(v) => set("cliOutrosEstabQuais", v)} />
-          )}
+          {(f.cliOutrosEstab || f.prospOutrosEstab) === "Sim" && (<Campo label="Quais?" value={f.cliOutrosEstabQuais || f.prospOutrosEstabQuais} onChange={(v) => set("cliOutrosEstabQuais", v)} />)}
           <Campo label="Marca de café que consome" value={f.cliMarcaConsome || f.prospMarcaCafe} onChange={(v) => set("cliMarcaConsome", v)} />
           <Opcoes label="Propriedade" opcoes={PROPRIEDADES} value={f.cliPropriedade} onChange={(v) => set("cliPropriedade", v)} />
           <Campo label="Informações comerciais" value={f.cliInformacoesComerciais} onChange={(v) => set("cliInformacoesComerciais", v)} />
           <SimNao label="Estabelecimento novo?" value={f.estabNovo || f.prospEstabNovo} onChange={(v) => set("estabNovo", v)} />
-          {(f.estabNovo || f.prospEstabNovo) === "Não" && (
-            <Campo label="Aberto há quanto tempo?" value={f.estabAbertoHa || f.prospAbertoHa} onChange={(v) => set("estabAbertoHa", v)} />
-          )}
+          {(f.estabNovo || f.prospEstabNovo) === "Não" && (<Campo label="Aberto há quanto tempo?" value={f.estabAbertoHa || f.prospAbertoHa} onChange={(v) => set("estabAbertoHa", v)} />)}
           <Campo label="Marca de café que consumia" value={f.estabMarcaCafeConsumia} onChange={(v) => set("estabMarcaCafeConsumia", v)} />
           <Campo label="Horário — das" type="time" value={f.estabHorarioDas || f.prospHorarioDas} onChange={(v) => set("estabHorarioDas", v)} />
           <Campo label="Horário — às" type="time" value={f.estabHorarioAs || f.prospHorarioAs} onChange={(v) => set("estabHorarioAs", v)} />
@@ -658,14 +543,12 @@ function Formulario() {
     set(campo, itens as Ficha[typeof campo]);
   }
 
+  type ColunaDef = { chave: keyof Item; label: string; largura: string; mono?: boolean; maxLen?: number };
+
   function TabelaItens({
-    titulo,
-    campoModo,
-    campoItens,
+    titulo, campoModo, campoItens, colunas,
   }: {
-    titulo: string;
-    campoModo: keyof Ficha;
-    campoItens: keyof Ficha;
+    titulo: string; campoModo: keyof Ficha; campoItens: keyof Ficha; colunas: ColunaDef[];
   }) {
     const itens = f[campoItens] as Item[];
     const actualizar = (itemId: string, k: keyof Item, v: string) =>
@@ -674,44 +557,34 @@ function Formulario() {
       <div className="border-b border-line p-5 last:border-b-0">
         <div className="mb-3 flex flex-wrap items-center gap-3">
           <h3 className="text-sm font-semibold">{titulo}</h3>
-          <button
-            onClick={() => setItens(campoItens, [...itens, novoItem()])}
-            className="no-print ml-auto rounded-md border border-line bg-paper px-3 py-1.5 text-sm font-medium hover:bg-rail"
-          >
-            + Adicionar
-          </button>
+          <button onClick={() => setItens(campoItens, [...itens, novoItem()])} className="no-print ml-auto rounded-md border border-line bg-paper px-3 py-1.5 text-sm font-medium hover:bg-rail">+ Adicionar</button>
         </div>
-        <Opcoes
-          label="Modo de cedência"
-          opcoes={MODOS_INVESTIMENTO}
-          value={String(f[campoModo] ?? "")}
-          onChange={(v) => set(campoModo, v as Ficha[typeof campoModo])}
-        />
+        <Opcoes label="Modo de cedência" opcoes={MODOS_INVESTIMENTO} value={String(f[campoModo] ?? "")} onChange={(v) => set(campoModo, v as Ficha[typeof campoModo])} />
         <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[820px] border-collapse text-sm">
+          <table className="w-full border-collapse text-sm">
             <thead>
               <tr className="border-b border-line text-left font-mono text-[11px] uppercase tracking-wide text-inksoft">
-                <th className="py-2 pr-3 font-medium">Qt.</th>
-                <th className="py-2 pr-3 font-medium">Descrição</th>
-                <th className="py-2 pr-3 font-medium">Referência</th>
-                <th className="py-2 pr-3 font-medium">Cor</th>
-                <th className="py-2 pr-3 font-medium">Largura</th>
-                <th className="py-2 pr-3 font-medium">Avanço</th>
-                <th className="py-2 font-medium">Altura</th>
+                {colunas.map((c) => (
+                  <th key={c.chave as string} className={`py-2 pr-3 font-medium ${c.largura.includes("min-w") ? "" : ""}`}>{c.label}</th>
+                ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
               {itens.map((it) => (
                 <tr key={it.id}>
-                  <td className="py-1 pr-3"><input value={it.qtd} onChange={(e) => actualizar(it.id, "qtd", e.target.value)} className={`${celaCls} w-14 text-right font-mono`} /></td>
-                  <td className="py-1 pr-3 min-w-[200px]">
-                    <TextoExpansivel value={it.descricao} onChange={(v) => actualizar(it.id, "descricao", v)} placeholder="Descrição do material" />
-                  </td>
-                  <td className="py-1 pr-3"><input value={it.ref} onChange={(e) => actualizar(it.id, "ref", e.target.value)} className={`${celaCls} w-28 font-mono`} /></td>
-                  <td className="py-1 pr-3"><input value={it.cor} onChange={(e) => actualizar(it.id, "cor", e.target.value)} className={`${celaCls} w-24`} /></td>
-                  <td className="py-1 pr-3"><input value={it.largura} onChange={(e) => actualizar(it.id, "largura", e.target.value)} className={`${celaCls} w-20 font-mono`} /></td>
-                  <td className="py-1 pr-3"><input value={it.avanco} onChange={(e) => actualizar(it.id, "avanco", e.target.value)} className={`${celaCls} w-20 font-mono`} /></td>
-                  <td className="py-1"><input value={it.altura} onChange={(e) => actualizar(it.id, "altura", e.target.value)} className={`${celaCls} w-20 font-mono`} /></td>
+                  {colunas.map((c, ci) => (
+                    <td key={c.chave as string} className={`py-1 ${ci < colunas.length - 1 ? "pr-3" : ""} ${c.chave === "descricao" ? "min-w-[250px]" : ""}`}>
+                      {c.chave === "descricao" ? (
+                        <TextoExpansivel value={it.descricao} onChange={(v) => actualizar(it.id, "descricao", v)} placeholder="Descrição do material" />
+                      ) : (
+                        <input
+                          value={it[c.chave] as string}
+                          onChange={(e) => actualizar(it.id, c.chave, c.maxLen ? e.target.value.slice(0, c.maxLen) : e.target.value)}
+                          className={`${celaCls} ${c.largura} ${c.mono ? "font-mono" : ""} ${c.chave === "qtd" ? "text-right" : ""}`}
+                        />
+                      )}
+                    </td>
+                  ))}
                 </tr>
               ))}
             </tbody>
@@ -721,48 +594,69 @@ function Formulario() {
     );
   }
 
+  const colMaquinas: ColunaDef[] = [
+    { chave: "qtd", label: "Qt.", largura: "w-14", mono: true, maxLen: 2 },
+    { chave: "cod", label: "Cód.", largura: "w-20", mono: true, maxLen: 6 },
+    { chave: "descricao", label: "Descrição", largura: "" },
+    { chave: "ref", label: "Referência", largura: "w-28", mono: true },
+  ];
+  const colMobiliario: ColunaDef[] = [
+    { chave: "qtd", label: "Qt.", largura: "w-14", mono: true, maxLen: 2 },
+    { chave: "cod", label: "Cód.", largura: "w-20", mono: true, maxLen: 6 },
+    { chave: "descricao", label: "Descrição", largura: "" },
+    { chave: "cor", label: "Cores e Pintura", largura: "w-32" },
+  ];
+  const colToldos: ColunaDef[] = [
+    { chave: "qtd", label: "Qt.", largura: "w-14", mono: true, maxLen: 2 },
+    { chave: "cod", label: "Cód.", largura: "w-20", mono: true, maxLen: 6 },
+    { chave: "descricao", label: "Descrição", largura: "" },
+    { chave: "cor", label: "Cor", largura: "w-24" },
+    { chave: "largura", label: "Largura", largura: "w-20", mono: true },
+    { chave: "avanco", label: "Avanço", largura: "w-20", mono: true },
+    { chave: "altura", label: "Altura", largura: "w-20", mono: true },
+  ];
+  const colReclames = colToldos;
+  const colOutros: ColunaDef[] = [
+    { chave: "qtd", label: "Qt.", largura: "w-14", mono: true, maxLen: 2 },
+    { chave: "cod", label: "Cód.", largura: "w-20", mono: true, maxLen: 6 },
+    { chave: "descricao", label: "Descrição", largura: "" },
+  ];
+
   const aba4 = (
     <>
       <div className="grid grid-cols-1 gap-x-6 gap-y-5 border-b border-line p-5 sm:grid-cols-2 lg:grid-cols-4">
-        <Campo
-          label="N.º do Pedido de Investimento"
-          mono
-          value={f.piNumero || proximoNumeroPI(f.area, f.id)}
-          onChange={(v) => set("piNumero", v)}
-        />
+        <Campo label="N.º do Pedido de Investimento" mono value={f.piNumero || proximoNumeroPI(f.area, f.id)} onChange={(v) => set("piNumero", v)} />
         <Bloqueado label="Área de Vendas" mono value={f.area} />
         <Bloqueado label="Inspector" value={f.inspector} />
       </div>
 
       <Seccao numero={1} titulo="Identificação" total={4}>
         <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
-          <Bloqueado label="Firma do Cliente" value={f.firma} />
-          <Bloqueado label="Nome do Estabelecimento" value={f.nomeEstabelecimento} />
-          <Bloqueado label="N.º de Contribuinte" mono value={f.contribuinte} />
-          <Bloqueado label="Morada" className="lg:col-span-2" value={f.morada} />
-          <Bloqueado label="Código Postal" mono value={f.codigoPostal} />
-          <Bloqueado label="Localidade" value={f.localidade} />
+          <CampoOuBloqueado label="Firma do Cliente" valor={f.firma} onChange={(v) => set("firma", v)} />
+          <CampoOuBloqueado label="Nome do Estabelecimento" valor={f.nomeEstabelecimento} onChange={(v) => set("nomeEstabelecimento", v)} />
+          <CampoOuBloqueado label="N.º de Contribuinte" valor={f.contribuinte} onChange={(v) => set("contribuinte", v)} mono />
+          <CampoOuBloqueado label="Morada" valor={f.morada} onChange={(v) => set("morada", v)} className="lg:col-span-2" />
+          <CampoOuBloqueado label="Código Postal" valor={f.codigoPostal} onChange={(v) => set("codigoPostal", formatarCodigoPostal(v))} mono />
+          <CampoOuBloqueado label="Localidade" valor={f.localidade} onChange={(v) => set("localidade", v)} />
           <SimNao label="Já consumia café Torrié?" value={f.piJaConsumiaTorrie} onChange={(v) => set("piJaConsumiaTorrie", v)} />
         </div>
       </Seccao>
 
       <Seccao numero={2} titulo="Material a Colocar no Cliente" total={4}>
-        <TabelaItens titulo="Máquinas" campoModo="piMaquinasModo" campoItens="piMaquinas" />
-        <TabelaItens titulo="Mobiliário" campoModo="piMobiliarioModo" campoItens="piMobiliario" />
-        <TabelaItens titulo="Toldos" campoModo="piToldosModo" campoItens="piToldos" />
-        <TabelaItens titulo="Reclames" campoModo="piReclamesModo" campoItens="piReclames" />
-        <TabelaItens titulo="Outros" campoModo="piOutrosModo" campoItens="piOutros" />
+        <TabelaItens titulo="Máquinas" campoModo="piMaquinasModo" campoItens="piMaquinas" colunas={colMaquinas} />
+        <TabelaItens titulo="Mobiliário" campoModo="piMobiliarioModo" campoItens="piMobiliario" colunas={colMobiliario} />
+        <TabelaItens titulo="Toldos / Estores e Outros em Tela" campoModo="piToldosModo" campoItens="piToldos" colunas={colToldos} />
+        <TabelaItens titulo="Reclames e Outros em Acrílico" campoModo="piReclamesModo" campoItens="piReclames" colunas={colReclames} />
+        <TabelaItens titulo="Outros" campoModo="piOutrosModo" campoItens="piOutros" colunas={colOutros} />
       </Seccao>
 
       <Seccao numero={3} titulo="Condições Acordadas" total={4}>
         <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
           <SimNao label="Contrato?" value={f.piContratoSim} onChange={(v) => set("piContratoSim", v)} />
-          {f.piContratoSim === "Sim" && (
-            <>
-              <Campo label="Contrato (anos)" mono value={f.piContrato} onChange={(v) => set("piContrato", v)} />
-              <Campo label="Total de quilos para contrato" mono value={f.piTotalQuilos} onChange={(v) => set("piTotalQuilos", v)} />
-            </>
-          )}
+          {f.piContratoSim === "Sim" && (<>
+            <Campo label="Contrato (anos)" mono value={f.piContrato} onChange={(v) => set("piContrato", v)} />
+            <Campo label="Total de quilos para contrato" mono value={f.piTotalQuilos} onChange={(v) => set("piTotalQuilos", v)} />
+          </>)}
           <Campo label="Média mensal (kg)" mono value={f.piMediaMensal} onChange={(v) => set("piMediaMensal", v)} />
           <Campo label="Lote" value={f.piLote} onChange={(v) => set("piLote", v)} />
           <Campo label="Bónus" value={f.piBonus} onChange={(v) => set("piBonus", v)} />
@@ -778,15 +672,16 @@ function Formulario() {
           <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
             <Campo label="Data" type="date" value={f.piData} onChange={(v) => set("piData", v)} />
           </div>
+          <p className="text-sm leading-relaxed">
+            Aceito as condições acordadas em 3 e o pedido dos bens referidos em 2 de acordo com o(s) modo(s) de cedência aí referido(s).
+          </p>
           <Assinatura label="Assinatura do Cliente" value={f.piAssinaturaClienteImg} onChange={(v) => set("piAssinaturaClienteImg", v)} />
           <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
             <Campo label="Assinatura do vendedor" value={f.piAssinaturaVendedor} onChange={(v) => set("piAssinaturaVendedor", v)} />
             <Campo label="Assinatura do inspector" value={f.piAssinaturaInspector} onChange={(v) => set("piAssinaturaInspector", v)} />
           </div>
           <div className="border-t border-line pt-5">
-            <p className="mb-4 font-mono text-[11px] uppercase tracking-wide text-inksoft">
-              Controlo Interno — preencher / assinar à mão no documento impresso
-            </p>
+            <p className="mb-4 font-mono text-[11px] uppercase tracking-wide text-inksoft">Controlo Interno — preencher / assinar à mão no documento impresso</p>
             <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
               <Campo label="Data de recepção" type="date" value={f.piDataRecepcao} onChange={(v) => set("piDataRecepcao", v)} />
               <Campo label="Aprovação JMV" value={f.piAprovacaoJMV} onChange={(v) => set("piAprovacaoJMV", v)} />
@@ -809,31 +704,17 @@ function Formulario() {
       <AppHeader />
       <main className="mx-auto max-w-6xl px-4 py-5 sm:px-6 sm:py-7">
         <section className="print-block rounded-xl border border-line bg-paper">
-          <div className="flex flex-col gap-1 border-b-2 border-ink px-5 py-4 sm:flex-row sm:items-end sm:justify-between">
+          <div className="print-header flex flex-col gap-1 border-b-2 border-ink px-5 py-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-primary">
-                Ficha de Cliente · Mercado Interno
-              </p>
-              <h1 className="text-2xl font-semibold tracking-tight text-balance">
-                {f.firma || "Nova ficha de cliente"}
-              </h1>
+              <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-primary">Ficha de Cliente · Mercado Interno</p>
+              <h1 className="text-2xl font-semibold tracking-tight text-balance">{f.firma || "Nova ficha de cliente"}</h1>
             </div>
-            <p className="font-mono text-[11px] text-inksoft">
-              {f.numeroCliente ? `N.º Cliente ${f.numeroCliente} · ` : ""}4 separadores
-            </p>
+            <p className="font-mono text-[11px] text-inksoft">{f.numeroCliente ? `N.º Cliente ${f.numeroCliente} · ` : ""}{SEPARADORES[aba]}</p>
           </div>
 
           <div className="no-print flex flex-wrap gap-1 border-b border-line bg-panel px-3 py-3">
             {SEPARADORES.map((t, i) => (
-              <button
-                key={t}
-                onClick={() => setAba(i)}
-                className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                  aba === i ? "bg-ink text-paper" : "border border-line bg-paper text-inksoft hover:bg-rail"
-                }`}
-              >
-                {t}
-              </button>
+              <button key={t} onClick={() => setAba(i)} className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${aba === i ? "bg-ink text-paper" : "border border-line bg-paper text-inksoft hover:bg-rail"}`}>{t}</button>
             ))}
           </div>
 
@@ -841,29 +722,16 @@ function Formulario() {
 
           <div className="no-print flex flex-col-reverse gap-3 border-t border-line p-5 sm:flex-row sm:items-center sm:justify-between">
             <p className="font-mono text-[11px] text-inksoft">
-              {erro && faltam.length > 0
-                ? `Faltam ${faltam.length} campos obrigatórios.`
-                : guardado
-                  ? "Ficha guardada neste aparelho."
-                  : "Alterações por guardar."}
+              {erro && faltam.length > 0 ? `Faltam ${faltam.length} campos obrigatórios.` : guardado ? "Ficha guardada neste aparelho." : "Alterações por guardar."}
             </p>
             <div className="flex flex-wrap items-center gap-3">
-              <button
-                onClick={() => navigate({ to: "/" })}
-                className="flex items-center gap-2 rounded-md border border-line bg-paper px-4 py-3 text-sm font-medium text-inksoft hover:bg-rail"
-              >
+              <button onClick={() => navigate({ to: "/" })} className="flex items-center gap-2 rounded-md border border-line bg-paper px-4 py-3 text-sm font-medium text-inksoft hover:bg-rail">
                 <span className="font-mono leading-none">✕</span> Cancelar
               </button>
-              <button
-                onClick={() => window.print()}
-                className="flex items-center gap-2 rounded-md border border-line bg-paper px-4 py-3 text-sm font-medium text-ink hover:bg-rail"
-              >
-                <span className="font-mono leading-none">⤓</span> Imprimir / PDF
+              <button onClick={() => imprimirAba(aba)} className="flex items-center gap-2 rounded-md border border-line bg-paper px-4 py-3 text-sm font-medium text-ink hover:bg-rail">
+                <span className="font-mono leading-none">⤓</span> Imprimir separador / PDF
               </button>
-              <button
-                onClick={guardar}
-                className="flex items-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-medium text-primary-foreground ring-1 ring-primary"
-              >
+              <button onClick={guardar} className="flex items-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-medium text-primary-foreground ring-1 ring-primary">
                 <span className="font-mono leading-none">✓</span> Guardar ficha
               </button>
             </div>
