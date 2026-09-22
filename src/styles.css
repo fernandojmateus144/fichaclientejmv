@@ -170,7 +170,7 @@
 @media print {
   @page {
     size: A4;
-    margin: 8mm;
+    margin: 6mm 6mm 6mm 18mm;
   }
   html, body {
     background: #fff !important;
