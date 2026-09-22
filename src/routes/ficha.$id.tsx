@@ -100,6 +100,7 @@ function Formulario() {
   const set = <K extends keyof Ficha>(k: K, v: Ficha[K]) => {
     setFicha({ ...f, [k]: v });
     setGuardado(false);
+    setErro(false);
   };
 
   const setLinha = (linhaId: string, k: keyof Linha, v: string) => {
@@ -127,21 +128,6 @@ function Formulario() {
       if (x.grupo === "Outro" && x.grupoLista === "Outros" && !x.grupoQual.trim()) faltam.push("grupoQual");
     }
     return [...new Set(faltam)];
-  }
-
-  function faltamNaAba(x: Ficha, abaNum: number): (keyof Ficha)[] {
-    if (abaNum === 0) {
-      const faltam = OBRIGATORIOS_ABA1.filter((k) => !String(x[k] ?? "").trim());
-      return faltam;
-    }
-    if (abaNum === 1) {
-      const faltam = OBRIGATORIOS_ABA2.filter((k) => !String(x[k] ?? "").trim());
-      if (x.sector === "Outro" && !x.sectorOutro.trim()) faltam.push("sectorOutro");
-      if (x.grupo === "Outro" && !x.grupoLista.trim()) faltam.push("grupoLista");
-      if (x.grupo === "Outro" && x.grupoLista === "Outros" && !x.grupoQual.trim()) faltam.push("grupoQual");
-      return faltam;
-    }
-    return [];
   }
 
   const faltam = emFaltaAte(f, aba);
@@ -322,8 +308,8 @@ function Formulario() {
       <div className="grid grid-cols-1 gap-x-6 gap-y-5 border-b border-line p-5 sm:grid-cols-2 lg:grid-cols-4">
         <Campo label="N.º Cliente" mono obrigatorio erro={erro} value={f.numeroCliente} onChange={(v) => set("numeroCliente", v)} />
         <Campo label="Ex Cliente N.º" mono value={f.exClienteNumero} onChange={(v) => set("exClienteNumero", v)} />
-        <Bloqueado label="Área de Vendas" mono value={f.area} />
-        <Bloqueado label="Inspector" value={f.inspector} />
+        <CampoOuBloqueado label="Área de Vendas" valor={f.area} onChange={(v) => set("area", v.replace(/\D/g, "").slice(0, 3))} mono obrigatorio erro={erro} />
+        <CampoOuBloqueado label="Inspector" valor={f.inspector} onChange={(v) => set("inspector", v)} obrigatorio erro={erro} />
       </div>
 
       <Seccao numero={1} titulo="Dados do Cliente" total={7}>
@@ -445,8 +431,8 @@ function Formulario() {
   const aba3 = (
     <>
       <div className="grid grid-cols-1 gap-x-6 gap-y-5 border-b border-line p-5 sm:grid-cols-2 lg:grid-cols-4">
-        <Bloqueado label="Área de Vendas" mono value={f.area} />
-        <Bloqueado label="Inspector" value={f.inspector} />
+        <CampoOuBloqueado label="Área de Vendas" valor={f.area} onChange={(v) => set("area", v.replace(/\D/g, "").slice(0, 3))} mono obrigatorio erro={erro} />
+        <CampoOuBloqueado label="Inspector" valor={f.inspector} onChange={(v) => set("inspector", v)} obrigatorio erro={erro} />
       </div>
 
       <Seccao numero={1} titulo="Identificação do Cliente" total={4}>
@@ -626,8 +612,8 @@ function Formulario() {
     <>
       <div className="grid grid-cols-1 gap-x-6 gap-y-5 border-b border-line p-5 sm:grid-cols-2 lg:grid-cols-4">
         <Campo label="N.º do Pedido de Investimento" mono value={f.piNumero || proximoNumeroPI(f.area, f.id)} onChange={(v) => set("piNumero", v)} />
-        <Bloqueado label="Área de Vendas" mono value={f.area} />
-        <Bloqueado label="Inspector" value={f.inspector} />
+        <CampoOuBloqueado label="Área de Vendas" valor={f.area} onChange={(v) => set("area", v.replace(/\D/g, "").slice(0, 3))} mono obrigatorio erro={erro} />
+        <CampoOuBloqueado label="Inspector" valor={f.inspector} onChange={(v) => set("inspector", v)} obrigatorio erro={erro} />
       </div>
 
       <Seccao numero={1} titulo="Identificação" total={4}>
@@ -714,7 +700,7 @@ function Formulario() {
 
           <div className="no-print flex flex-wrap gap-1 border-b border-line bg-panel px-3 py-3">
             {SEPARADORES.map((t, i) => (
-              <button key={t} onClick={() => setAba(i)} className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${aba === i ? "bg-ink text-paper" : "border border-line bg-paper text-inksoft hover:bg-rail"}`}>{t}</button>
+              <button key={t} onClick={() => { setAba(i); setErro(false); }} className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${aba === i ? "bg-ink text-paper" : "border border-line bg-paper text-inksoft hover:bg-rail"}`}>{t}</button>
             ))}
           </div>
 
