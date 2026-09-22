@@ -191,13 +191,13 @@ function Formulario() {
   /* ---------- separador 1 — prospecção ---------- */
   const aba1 = (
     <>
-      <div className="grid grid-cols-1 gap-x-6 gap-y-5 border-b border-line p-5 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="print-grid grid grid-cols-1 gap-x-6 gap-y-5 border-b border-line p-5 sm:grid-cols-2 lg:grid-cols-4">
         <Campo label="Área de Vendas" mono obrigatorio erro={erro} value={f.area} onChange={(v) => set("area", v.replace(/\D/g, "").slice(0, 3))} />
         <Campo label="Inspector" obrigatorio erro={erro} value={f.inspector} onChange={(v) => set("inspector", v)} />
       </div>
 
       <Seccao numero={1} titulo="Dados do Cliente" total={4}>
-        <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="print-grid grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
           <Campo label="Firma do Cliente" obrigatorio erro={erro} value={f.firma} onChange={(v) => set("firma", v)} />
           <Campo label="Nome do Estabelecimento" obrigatorio erro={erro} value={f.nomeEstabelecimento} onChange={(v) => set("nomeEstabelecimento", v)} />
           <Campo label="N.º de Contribuinte" mono obrigatorio erro={erro} value={f.contribuinte} onChange={(v) => set("contribuinte", v)} />
@@ -214,7 +214,7 @@ function Formulario() {
       </Seccao>
 
       <Seccao numero={2} titulo="Contacto de Prospecção" total={4}>
-        <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="print-grid grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
           <Campo label="Data" type="date" value={f.prospData} onChange={(v) => set("prospData", v)} />
           <Campo label="Responsável pela Negociação" value={f.prospRespNegociacao} onChange={(v) => set("prospRespNegociacao", v)} />
           <Campo label="Anos de Actividade" mono value={f.prospAnosActividade} onChange={(v) => set("prospAnosActividade", v)} />
@@ -231,7 +231,7 @@ function Formulario() {
       </Seccao>
 
       <Seccao numero={3} titulo="Estabelecimento e Vínculo" total={4}>
-        <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="print-grid grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
           <SimNao label="Estabelecimento novo?" value={f.prospEstabNovo} onChange={(v) => set("prospEstabNovo", v)} />
           {f.prospEstabNovo === "Não" && (<Campo label="Aberto há quanto tempo?" value={f.prospAbertoHa} onChange={(v) => set("prospAbertoHa", v)} />)}
           <SimNao label="Houve trespasse?" value={f.prospTrespasse} onChange={(v) => set("prospTrespasse", v)} />
@@ -250,7 +250,7 @@ function Formulario() {
       </Seccao>
 
       <Seccao numero={4} titulo="Consumo, Concorrência e Investimento Pedido" total={4}>
-        <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="print-grid grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
           <Campo label="Marca de café actual" value={f.prospMarcaCafe} onChange={(v) => set("prospMarcaCafe", v)} />
           <Campo label="Consumo mensal (kg)" mono value={f.prospConsumoMensal} onChange={(v) => set("prospConsumoMensal", v)} />
           <Campo label="Lote" value={f.prospLote} onChange={(v) => set("prospLote", v)} />
@@ -272,7 +272,7 @@ function Formulario() {
           <Campo label="Outros" value={f.prospOutros} onChange={(v) => set("prospOutros", v)} />
           <Campo label="Lote a propor" value={f.prospLoteInvestimento} onChange={(v) => set("prospLoteInvestimento", v)} />
         </div>
-        <div className="grid grid-cols-1 gap-x-6 gap-y-5 px-5 pb-5 sm:grid-cols-2">
+        <div className="print-grid grid grid-cols-1 gap-x-6 gap-y-5 px-5 pb-5 sm:grid-cols-2">
           <AreaTexto label="Pontos fracos do estabelecimento" value={f.prospPontosFracos} onChange={(v) => set("prospPontosFracos", v)} rows={3} />
           <AreaTexto label="Condições propostas" value={f.prospCondicoes} onChange={(v) => set("prospCondicoes", v)} rows={3} />
           <AreaTexto label="O que é necessário para captar o cliente" value={f.prospCaptar} onChange={(v) => set("prospCaptar", v)} rows={3} />
@@ -288,7 +288,7 @@ function Formulario() {
           </button>
         </div>
         {f.prospVisitasDatas.length === 0 && (<p className="font-mono text-[11px] text-inksoft">Nenhuma data de visita posterior registada.</p>)}
-        <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="print-grid grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
           {f.prospVisitasDatas.map((d, i) => (
             <div key={i} className="flex items-end gap-2">
               <div className="flex-1">
@@ -305,7 +305,7 @@ function Formulario() {
   /* ---------- separador 2 — abertura SAP ---------- */
   const aba2 = (
     <>
-      <div className="grid grid-cols-1 gap-x-6 gap-y-5 border-b border-line p-5 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="print-grid grid grid-cols-1 gap-x-6 gap-y-5 border-b border-line p-5 sm:grid-cols-2 lg:grid-cols-4">
         <Campo label="N.º Cliente" mono obrigatorio erro={erro} value={f.numeroCliente} onChange={(v) => set("numeroCliente", v)} />
         <Campo label="Ex Cliente N.º" mono value={f.exClienteNumero} onChange={(v) => set("exClienteNumero", v)} />
         <CampoOuBloqueado label="Área de Vendas" valor={f.area} onChange={(v) => set("area", v.replace(/\D/g, "").slice(0, 3))} mono obrigatorio erro={erro} />
@@ -313,7 +313,7 @@ function Formulario() {
       </div>
 
       <Seccao numero={1} titulo="Dados do Cliente" total={7}>
-        <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="print-grid grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
           <CampoOuBloqueado label="Firma do Cliente" valor={f.firma} onChange={(v) => set("firma", v)} obrigatorio erro={erro} />
           <CampoOuBloqueado label="Nome do Estabelecimento" valor={f.nomeEstabelecimento} onChange={(v) => set("nomeEstabelecimento", v)} obrigatorio erro={erro} />
           <CampoOuBloqueado label="N.º de Contribuinte" valor={f.contribuinte} onChange={(v) => set("contribuinte", v)} mono obrigatorio erro={erro} />
@@ -330,7 +330,7 @@ function Formulario() {
       </Seccao>
 
       <Seccao numero={2} titulo="Canal / Sector de Actividade / Grupo de Clientes" total={7}>
-        <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-3">
+        <div className="print-grid grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-3">
           <Opcoes label="Canal de Distribuição" opcoes={CANAIS} obrigatorio erro={erro} value={f.canal} onChange={(v) => set("canal", v)} />
           <div className="space-y-4">
             <Opcoes label="Sector de Actividade" opcoes={SECTORES} obrigatorio erro={erro} value={f.sector} onChange={(v) => set("sector", v)} />
@@ -347,7 +347,7 @@ function Formulario() {
       </Seccao>
 
       <Seccao numero={3} titulo="Dados Financeiros" total={7}>
-        <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2">
+        <div className="print-grid grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2">
           <Campo label="Condições de Pagamento" obrigatorio erro={erro} value={f.condicoesPagamento} onChange={(v) => set("condicoesPagamento", v)} />
           <Campo label="Bancos" value={f.bancos} onChange={(v) => set("bancos", v)} />
         </div>
@@ -356,7 +356,7 @@ function Formulario() {
       {eCafes && (
         <Seccao numero={4} titulo="Dados Normanvi (só clientes de Café HORECA)" total={7}>
           <div className="space-y-5 p-5">
-            <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-3">
+            <div className="print-grid grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-3">
               <Campo label="Máquina de Café — Marca - Modelo" value={f.maquinaCafe} onChange={(v) => set("maquinaCafe", v)} />
               <Campo label="Moinho — Marca - Modelo" value={f.moinho} onChange={(v) => set("moinho", v)} />
               <Campo label="Máquina de Lavar — Marca - Modelo" value={f.maquinaLavar} onChange={(v) => set("maquinaLavar", v)} />
@@ -368,7 +368,7 @@ function Formulario() {
       )}
 
       <Seccao numero={5} titulo="Local de Entrega da Mercadoria" total={7}>
-        <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="print-grid grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
           <Campo label="Morada" className="lg:col-span-2" value={f.entregaMorada} onChange={(v) => set("entregaMorada", v)} />
           <Campo label="Código Postal" mono value={f.entregaCodigoPostal} onChange={(v) => set("entregaCodigoPostal", formatarCodigoPostal(v))} />
           <Campo label="Localidade" value={f.entregaLocalidade} onChange={(v) => set("entregaLocalidade", v)} />
@@ -430,13 +430,13 @@ function Formulario() {
   /* ---------- separador 3 — ficha para contrato ---------- */
   const aba3 = (
     <>
-      <div className="grid grid-cols-1 gap-x-6 gap-y-5 border-b border-line p-5 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="print-grid grid grid-cols-1 gap-x-6 gap-y-5 border-b border-line p-5 sm:grid-cols-2 lg:grid-cols-4">
         <CampoOuBloqueado label="Área de Vendas" valor={f.area} onChange={(v) => set("area", v.replace(/\D/g, "").slice(0, 3))} mono obrigatorio erro={erro} />
         <CampoOuBloqueado label="Inspector" valor={f.inspector} onChange={(v) => set("inspector", v)} obrigatorio erro={erro} />
       </div>
 
       <Seccao numero={1} titulo="Identificação do Cliente" total={4}>
-        <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="print-grid grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
           <CampoOuBloqueado label="Firma do Cliente" valor={f.firma} onChange={(v) => set("firma", v)} />
           <CampoOuBloqueado label="Nome do Estabelecimento" valor={f.nomeEstabelecimento} onChange={(v) => set("nomeEstabelecimento", v)} />
           <CampoOuBloqueado label="N.º de Contribuinte" valor={f.contribuinte} onChange={(v) => set("contribuinte", v)} mono />
@@ -459,7 +459,7 @@ function Formulario() {
 
       {f.contratoTipoCliente === "Cliente em Nome Individual" && (
         <Seccao numero={2} titulo="Cliente em Nome Individual" total={4}>
-          <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="print-grid grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
             <SimNao label="Natural de Portugal?" value={f.indNaturalidadePt} onChange={(v) => set("indNaturalidadePt", v)} />
             {f.indNaturalidadePt === "Não" && (<Campo label="Naturalidade" value={f.indNaturalidadeQual} onChange={(v) => set("indNaturalidadeQual", v)} />)}
             <Opcoes label="Estado civil" opcoes={ESTADOS_CIVIS} value={f.indEstadoCivil} onChange={(v) => set("indEstadoCivil", v)} />
@@ -484,7 +484,7 @@ function Formulario() {
             {f.socios.map((s, i) => (
               <div key={s.id} className="rounded-lg border border-line p-4">
                 <p className="mb-3 font-mono text-[11px] uppercase tracking-wide text-inksoft">Signatário {i + 1}</p>
-                <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="print-grid grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
                   <Campo label="Nome" value={s.nome} onChange={(v) => setSocio(s.id, "nome", v)} />
                   <Campo label="Cargo" value={s.cargo} onChange={(v) => setSocio(s.id, "cargo", v)} />
                   <Opcoes label="Estado civil" opcoes={ESTADOS_CIVIS} value={s.estadoCivil} onChange={(v) => setSocio(s.id, "estadoCivil", v)} />
@@ -500,7 +500,7 @@ function Formulario() {
       )}
 
       <Seccao numero={3} titulo="Informações sobre o Cliente e o Estabelecimento" total={4}>
-        <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="print-grid grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
           <SimNao label="Cliente novo?" value={f.cliNovo} onChange={(v) => set("cliNovo", v)} />
           <Campo label="É nosso cliente em que estabelecimento?" value={f.cliNossoClienteEstab} onChange={(v) => set("cliNossoClienteEstab", v)} />
           <Campo label="Foi nosso cliente em que estabelecimento?" value={f.cliFoiNossoClienteEstab} onChange={(v) => set("cliFoiNossoClienteEstab", v)} />
@@ -516,7 +516,7 @@ function Formulario() {
           <Campo label="Horário — das" type="time" value={f.estabHorarioDas || f.prospHorarioDas} onChange={(v) => set("estabHorarioDas", v)} />
           <Campo label="Horário — às" type="time" value={f.estabHorarioAs || f.prospHorarioAs} onChange={(v) => set("estabHorarioAs", v)} />
         </div>
-        <div className="grid grid-cols-1 gap-x-6 gap-y-5 px-5 pb-5 sm:grid-cols-2">
+        <div className="print-grid grid grid-cols-1 gap-x-6 gap-y-5 px-5 pb-5 sm:grid-cols-2">
           <AreaTexto label="Parecer sobre o estabelecimento" value={f.parecerEstabelecimento} onChange={(v) => set("parecerEstabelecimento", v)} rows={3} />
           <AreaTexto label="Parecer sobre o cliente" value={f.parecerCliente} onChange={(v) => set("parecerCliente", v)} rows={3} />
         </div>
@@ -610,14 +610,14 @@ function Formulario() {
 
   const aba4 = (
     <>
-      <div className="grid grid-cols-1 gap-x-6 gap-y-5 border-b border-line p-5 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="print-grid grid grid-cols-1 gap-x-6 gap-y-5 border-b border-line p-5 sm:grid-cols-2 lg:grid-cols-4">
         <Campo label="N.º do Pedido de Investimento" mono value={f.piNumero || proximoNumeroPI(f.area, f.id)} onChange={(v) => set("piNumero", v)} />
         <CampoOuBloqueado label="Área de Vendas" valor={f.area} onChange={(v) => set("area", v.replace(/\D/g, "").slice(0, 3))} mono obrigatorio erro={erro} />
         <CampoOuBloqueado label="Inspector" valor={f.inspector} onChange={(v) => set("inspector", v)} obrigatorio erro={erro} />
       </div>
 
       <Seccao numero={1} titulo="Identificação" total={4}>
-        <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="print-grid grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
           <CampoOuBloqueado label="Firma do Cliente" valor={f.firma} onChange={(v) => set("firma", v)} />
           <CampoOuBloqueado label="Nome do Estabelecimento" valor={f.nomeEstabelecimento} onChange={(v) => set("nomeEstabelecimento", v)} />
           <CampoOuBloqueado label="N.º de Contribuinte" valor={f.contribuinte} onChange={(v) => set("contribuinte", v)} mono />
@@ -637,7 +637,7 @@ function Formulario() {
       </Seccao>
 
       <Seccao numero={3} titulo="Condições Acordadas" total={4}>
-        <div className="grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="print-grid grid grid-cols-1 gap-x-6 gap-y-5 p-5 sm:grid-cols-2 lg:grid-cols-3">
           <SimNao label="Contrato?" value={f.piContratoSim} onChange={(v) => set("piContratoSim", v)} />
           {f.piContratoSim === "Sim" && (<>
             <Campo label="Contrato (anos)" mono value={f.piContrato} onChange={(v) => set("piContrato", v)} />
@@ -655,20 +655,20 @@ function Formulario() {
 
       <Seccao numero={4} titulo="Assinaturas e Controlo Interno" total={4}>
         <div className="space-y-5 p-5">
-          <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="print-grid grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
             <Campo label="Data" type="date" value={f.piData} onChange={(v) => set("piData", v)} />
           </div>
           <p className="text-sm leading-relaxed">
             Aceito as condições acordadas em 3 e o pedido dos bens referidos em 2 de acordo com o(s) modo(s) de cedência aí referido(s).
           </p>
           <Assinatura label="Assinatura do Cliente" value={f.piAssinaturaClienteImg} onChange={(v) => set("piAssinaturaClienteImg", v)} />
-          <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="print-grid grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
             <Campo label="Assinatura do vendedor" value={f.piAssinaturaVendedor} onChange={(v) => set("piAssinaturaVendedor", v)} />
             <Campo label="Assinatura do inspector" value={f.piAssinaturaInspector} onChange={(v) => set("piAssinaturaInspector", v)} />
           </div>
           <div className="border-t border-line pt-5">
             <p className="mb-4 font-mono text-[11px] uppercase tracking-wide text-inksoft">Controlo Interno — preencher / assinar à mão no documento impresso</p>
-            <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="print-grid grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
               <Campo label="Data de recepção" type="date" value={f.piDataRecepcao} onChange={(v) => set("piDataRecepcao", v)} />
               <Campo label="Aprovação JMV" value={f.piAprovacaoJMV} onChange={(v) => set("piAprovacaoJMV", v)} />
               <Campo label="Data de aprovação" type="date" value={f.piDataAprovacao} onChange={(v) => set("piDataAprovacao", v)} />

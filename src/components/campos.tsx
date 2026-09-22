@@ -17,9 +17,9 @@ export function Seccao({
   children: ReactNode;
 }) {
   return (
-    <div className="border-b border-line">
-      <div className="flex flex-wrap items-center gap-3 bg-panel px-5 py-3">
-        <span className="grid size-8 shrink-0 place-items-center rounded-sm bg-ink font-mono text-sm font-semibold text-paper">
+    <div className="print-sec border-b border-line">
+      <div className="print-sec-header flex flex-wrap items-center gap-3 bg-panel px-5 py-3">
+        <span className="print-sec-num grid size-8 shrink-0 place-items-center rounded-sm bg-ink font-mono text-sm font-semibold text-paper">
           {numero}
         </span>
         <h2 className="text-base font-semibold tracking-tight">{titulo}</h2>
@@ -293,7 +293,7 @@ export function SimNao({
     </label>
   );
   return (
-    <div className={`block ${className ?? ""}`}>
+    <div className={`print-simnao block ${className ?? ""}`}>
       <span className="mb-1.5 block text-xs font-medium text-inksoft">
         {label}
         {obrigatorio && <Obrigatorio />}
