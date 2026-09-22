@@ -168,6 +168,10 @@
 }
 
 @media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
   .no-print {
     display: none !important;
   }
@@ -176,5 +180,45 @@
   }
   .print-block {
     border: none !important;
+    border-radius: 0 !important;
+    max-width: 100% !important;
+  }
+  .print-header {
+    border-bottom: 2px solid #000 !important;
+  }
+  /* Expand text inputs and textareas for print readability */
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="date"],
+  input[type="time"],
+  input[type="number"],
+  textarea {
+    border: 1px solid #ccc !important;
+    background: #fff !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  /* Locked fields: show value clearly */
+  .print-locked {
+    border: 1px solid #ddd !important;
+    background: #f9f9f9 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  /* Tables: keep borders visible */
+  table {
+    border-collapse: collapse !important;
+  }
+  th, td {
+    border: 1px solid #ddd !important;
+  }
+  /* Avoid breaking sections across pages */
+  section, .seccao {
+    break-inside: avoid;
+  }
+  /* Signature area: ensure enough space */
+  canvas {
+    border: 1px solid #ccc !important;
   }
 }
