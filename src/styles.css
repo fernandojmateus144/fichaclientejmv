@@ -176,6 +176,9 @@
     background: #fff !important;
     font-size: 9px !important;
   }
+  .min-h-screen, [class*="min-h-screen"] {
+    min-height: 0 !important;
+  }
   .no-print {
     display: none !important;
   }
@@ -306,8 +309,8 @@
     font-size: 8px !important;
   }
 
-  /* Allow section breaks but try to fit in 1-2 pages */
+  /* Allow section breaks to avoid blank pages */
   .print-sec {
-    break-inside: avoid;
+    break-inside: auto;
   }
 }
