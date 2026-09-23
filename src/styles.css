@@ -184,6 +184,20 @@
     border-radius: 0 !important;
     max-width: 100% !important;
   }
+  main, [class*="max-w"] {
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .p-5, [class*="p-5"] {
+    padding: 4px 8px !important;
+  }
+  .gap-x-6 {
+    column-gap: 8px !important;
+  }
+  .gap-y-5 {
+    row-gap: 4px !important;
+  }
   .print-header {
     border-bottom: 2px solid #000 !important;
     padding: 4px 8px !important;
